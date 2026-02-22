@@ -50,32 +50,39 @@ export class Target3D {
     const s = this.config.scale;
     const radius = 0.6 * s;
 
-    // Non-overlapping ring bands (no z-fighting since geometry doesn't overlap)
-    const bands: { inner: number; outer: number; color: number }[] = [
-      { inner: 0.75, outer: 1.0,  color: 0x0074d9 },  // blue
-      { inner: 0.55, outer: 0.75, color: 0xffffff },  // white
-      { inner: 0.35, outer: 0.55, color: 0xe0342e },  // red
-      { inner: 0.18, outer: 0.35, color: 0xffffff },  // white
+    // Draw target rings on canvas and render as Sprite (avoids flat-mesh rendering bugs)
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    const cx = size / 2;
+    const cy = size / 2;
+    const maxR = size / 2 - 4;
+
+    // Rings from outside in: blue, white, red, white, red
+    const rings: { r: number; color: string }[] = [
+      { r: 1.0,  color: '#0074d9' },
+      { r: 0.75, color: '#ffffff' },
+      { r: 0.55, color: '#e0342e' },
+      { r: 0.35, color: '#ffffff' },
+      { r: 0.18, color: '#e0342e' },
     ];
 
-    for (const band of bands) {
-      const geo = new THREE.RingGeometry(radius * band.inner, radius * band.outer, 48);
-      const mat = new THREE.MeshBasicMaterial({ color: band.color, side: THREE.DoubleSide });
-      this.mesh.add(new THREE.Mesh(geo, mat));
+    for (const ring of rings) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, maxR * ring.r, 0, Math.PI * 2);
+      ctx.fillStyle = ring.color;
+      ctx.fill();
     }
 
-    // Bullseye center disc
-    const centerGeo = new THREE.CircleGeometry(radius * 0.18, 48);
-    const centerMat = new THREE.MeshBasicMaterial({ color: 0xe0342e, side: THREE.DoubleSide });
-    this.mesh.add(new THREE.Mesh(centerGeo, centerMat));
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
 
-    // Rim
-    const rimGeo = new THREE.CylinderGeometry(radius, radius, 0.04, 32);
-    const rimMat = new THREE.MeshLambertMaterial({ color: Colors3D.wood });
-    const rim = new THREE.Mesh(rimGeo, rimMat);
-    rim.rotation.x = Math.PI / 2;
-    rim.position.z = 0.02;
-    this.mesh.add(rim);
+    const spriteMat = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(radius * 2, radius * 2, 1);
+    this.mesh.add(sprite);
 
     // Stand
     const standMat = new THREE.MeshLambertMaterial({ color: Colors3D.wood });
