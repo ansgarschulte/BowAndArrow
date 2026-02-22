@@ -50,66 +50,25 @@ export class Target3D {
     const s = this.config.scale;
     const radius = 0.6 * s;
 
-    // Draw target on canvas: outer=blue, middle=red, inner=yellow
-    const canvas = document.createElement('canvas');
-    const size = 256;
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d')!;
-    const cx = size / 2;
-    const cy = size / 2;
-    const maxR = size / 2 - 4;
+    // Build target from concentric colored circle meshes (no textures)
+    const rings: { outerR: number; color: number }[] = [
+      { outerR: 1.0, color: 0x0074d9 },  // blue outer
+      { outerR: 0.75, color: 0xffffff },  // white ring
+      { outerR: 0.55, color: 0xe0342e },  // red ring
+      { outerR: 0.35, color: 0xffffff },  // white ring
+      { outerR: 0.18, color: 0xe0342e },  // red bullseye
+    ];
 
-    // White background
-    ctx.beginPath();
-    ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // Blue outer ring
-    ctx.beginPath();
-    ctx.arc(cx, cy, maxR * 0.9, 0, Math.PI * 2);
-    ctx.fillStyle = '#0074d9';
-    ctx.fill();
-    ctx.strokeStyle = '#005ea8';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Red middle ring
-    ctx.beginPath();
-    ctx.arc(cx, cy, maxR * 0.6, 0, Math.PI * 2);
-    ctx.fillStyle = '#e0342e';
-    ctx.fill();
-    ctx.strokeStyle = '#b02a24';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Yellow inner ring (bullseye)
-    ctx.beginPath();
-    ctx.arc(cx, cy, maxR * 0.3, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffd700';
-    ctx.fill();
-    ctx.strokeStyle = '#cca700';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Center dot
-    ctx.beginPath();
-    ctx.arc(cx, cy, maxR * 0.06, 0, Math.PI * 2);
-    ctx.fillStyle = '#333';
-    ctx.fill();
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-
-    // Front face – use BasicMaterial so texture colors show regardless of lighting
-    const faceGeo = new THREE.CircleGeometry(radius, 32);
-    const faceMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-    const face = new THREE.Mesh(faceGeo, faceMat);
-    this.mesh.add(face);
+    rings.forEach((ring, i) => {
+      const geo = new THREE.CircleGeometry(radius * ring.outerR, 48);
+      const mat = new THREE.MeshBasicMaterial({
+        color: ring.color,
+        side: THREE.DoubleSide,
+      });
+      const disc = new THREE.Mesh(geo, mat);
+      disc.position.z = 0.001 * (i + 1); // stack slightly forward so inner rings render on top
+      this.mesh.add(disc);
+    });
 
     // Rim (edge thickness)
     const rimGeo = new THREE.CylinderGeometry(radius, radius, 0.04, 32);
