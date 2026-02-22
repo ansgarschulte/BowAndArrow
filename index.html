@@ -9,6 +9,7 @@
   <meta name="theme-color" content="#2d5016" />
   <title>Ziel Scheiben Schiessen Leicht Gemacht</title>
   <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -67,6 +68,11 @@
   <div id="update-banner" onclick="location.reload(true)">🔄 Neue Version verfügbar — Bitte aktualisieren</div>
   <script>
     (function() {
+      // Register Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+      }
+      // Version check
       var currentVersion = null;
       function checkVersion() {
         fetch('/version.json?t=' + Date.now())
