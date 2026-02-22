@@ -53,6 +53,13 @@ export class MenuScreen {
       .level-btn .lock-icon {
         font-size: 12px; display: block; margin-top: 2px;
       }
+      .cheat-btn {
+        position: absolute; top: 16px; right: 16px;
+        background: none; border: none; font-size: 24px;
+        cursor: pointer; opacity: 0.4; padding: 8px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .cheat-btn:active { opacity: 1; }
     `;
     document.head.appendChild(style);
     document.body.appendChild(this.container);
@@ -75,15 +82,30 @@ export class MenuScreen {
           </button>`;
         }).join('')}
       </div>
+      <button class="cheat-btn" id="cheat-unlock" title="Alle Level freischalten">🔓</button>
     `;
 
     this.container.querySelectorAll('.level-btn.unlocked').forEach(btn => {
-      btn.addEventListener('pointerdown', (e) => {
+      const handler = (e: Event) => {
         e.preventDefault();
         const level = parseInt((btn as HTMLElement).dataset.level || '1', 10);
         this.onLevelSelect(level);
-      });
+      };
+      btn.addEventListener('touchstart', handler, { passive: false });
+      btn.addEventListener('click', handler);
     });
+
+    const cheatBtn = document.getElementById('cheat-unlock');
+    if (cheatBtn) {
+      const unlock = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        localStorage.setItem('bogen_progress', '10');
+        this.show();
+      };
+      cheatBtn.addEventListener('touchstart', unlock, { passive: false });
+      cheatBtn.addEventListener('click', unlock);
+    }
   }
 
   hide(): void {
