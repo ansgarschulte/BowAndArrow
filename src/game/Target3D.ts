@@ -50,7 +50,7 @@ export class Target3D {
     const s = this.config.scale;
     const radius = 0.6 * s;
 
-    // Draw target face on canvas texture (standard archery target)
+    // Draw target on canvas: outer=blue, middle=red, inner=yellow
     const canvas = document.createElement('canvas');
     const size = 256;
     canvas.width = size;
@@ -60,62 +60,56 @@ export class Target3D {
     const cy = size / 2;
     const maxR = size / 2 - 4;
 
-    // 10 rings from outside: white, white, black, black, blue, blue, red, red, gold, gold
-    const ringColors = [
-      '#ffffff', '#ffffff',
-      '#000000', '#000000',
-      '#00a2e8', '#00a2e8',
-      '#ed1c24', '#ed1c24',
-      '#fff200', '#fff200',
-    ];
-
-    // Draw rings from outside in
-    for (let i = 0; i < 10; i++) {
-      const r = maxR * (1 - i / 10);
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = ringColors[i];
-      ctx.fill();
-      // Ring border
-      ctx.strokeStyle = i < 4 ? '#444' : '#333';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    // Bullseye X
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
-    const bR = maxR * 0.05;
-    ctx.beginPath();
-    ctx.moveTo(cx - bR, cy - bR);
-    ctx.lineTo(cx + bR, cy + bR);
-    ctx.moveTo(cx + bR, cy - bR);
-    ctx.lineTo(cx - bR, cy + bR);
-    ctx.stroke();
-
-    // Outer border
+    // White background
     ctx.beginPath();
     ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
     ctx.strokeStyle = '#333';
     ctx.lineWidth = 3;
     ctx.stroke();
+
+    // Blue outer ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, maxR * 0.9, 0, Math.PI * 2);
+    ctx.fillStyle = '#0074d9';
+    ctx.fill();
+    ctx.strokeStyle = '#005ea8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Red middle ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, maxR * 0.6, 0, Math.PI * 2);
+    ctx.fillStyle = '#e0342e';
+    ctx.fill();
+    ctx.strokeStyle = '#b02a24';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Yellow inner ring (bullseye)
+    ctx.beginPath();
+    ctx.arc(cx, cy, maxR * 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffd700';
+    ctx.fill();
+    ctx.strokeStyle = '#cca700';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, maxR * 0.06, 0, Math.PI * 2);
+    ctx.fillStyle = '#333';
+    ctx.fill();
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
 
     // Front face
     const faceGeo = new THREE.CircleGeometry(radius, 32);
-    const faceMat = new THREE.MeshLambertMaterial({ map: texture, side: THREE.FrontSide });
+    const faceMat = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
     const face = new THREE.Mesh(faceGeo, faceMat);
-    face.rotation.y = Math.PI; // face toward camera (negative Z)
     this.mesh.add(face);
-
-    // Back face (plain wood color)
-    const backGeo = new THREE.CircleGeometry(radius, 32);
-    const backMat = new THREE.MeshLambertMaterial({ color: Colors3D.wood, side: THREE.FrontSide });
-    const back = new THREE.Mesh(backGeo, backMat);
-    back.position.z = 0.04;
-    this.mesh.add(back);
 
     // Rim (edge thickness)
     const rimGeo = new THREE.CylinderGeometry(radius, radius, 0.04, 32);
