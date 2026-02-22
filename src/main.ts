@@ -15,14 +15,7 @@ const config: Phaser.Types.Core.GameConfig = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    min: {
-      width: 320,
-      height: 480,
-    },
-    max: {
-      width: 1024,
-      height: 1366,
-    },
+    expandParent: true,
   },
   scene: [BootScene, MenuScene, GameScene, LevelCompleteScene, GameOverScene],
   input: {
@@ -34,4 +27,14 @@ const config: Phaser.Types.Core.GameConfig = {
   },
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+// Resize on orientation change and iOS address bar hide/show
+function handleResize() {
+  setTimeout(() => {
+    game.scale.resize(GAME_WIDTH, GAME_HEIGHT);
+    game.scale.refresh();
+  }, 100);
+}
+window.addEventListener('resize', handleResize);
+window.addEventListener('orientationchange', handleResize);
