@@ -307,7 +307,7 @@ export class Archer3D {
   getShootDirection(aimH: number, aimV: number): THREE.Vector3 {
     const dir = new THREE.Vector3(
       Math.sin(aimH) * Math.cos(aimV),
-      Math.sin(aimV) + 0.15,
+      Math.sin(aimV) + 0.05,
       Math.cos(aimH) * Math.cos(aimV)
     );
     return dir.normalize();

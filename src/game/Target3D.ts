@@ -23,13 +23,15 @@ export class Target3D {
   private hit: boolean = false;
   private hitRadius: number;
   private scene: THREE.Scene;
+  private camera: THREE.Camera | null = null;
 
-  constructor(scene: THREE.Scene, config: Target3DConfig) {
+  constructor(scene: THREE.Scene, config: Target3DConfig, camera?: THREE.Camera) {
     this.scene = scene;
     this.config = config;
+    this.camera = camera || null;
     this.basePos = new THREE.Vector3(config.x, config.y, config.z);
     this.mesh = new THREE.Group();
-    this.hitRadius = 0.5 * config.scale * GameSettings.hitRadiusMultiplier;
+    this.hitRadius = 0.55 * config.scale * GameSettings.hitRadiusMultiplier;
 
     if (config.type === 'duck') {
       this.createDuck();
@@ -45,13 +47,26 @@ export class Target3D {
   }
 
   private createTarget(): void {
-    // Create target as concentric cylinders (rings)
+    // White background disc for contrast
+    const bgGeo = new THREE.CylinderGeometry(
+      0.6 * this.config.scale,
+      0.6 * this.config.scale,
+      0.04,
+      24
+    );
+    const bgMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const bgDisc = new THREE.Mesh(bgGeo, bgMat);
+    bgDisc.position.z = 0.005;
+    bgDisc.rotation.x = Math.PI / 2;
+    this.mesh.add(bgDisc);
+
+    // Concentric colored rings
     const rings = [
-      { radius: 0.5, color: Colors3D.targetRed },
-      { radius: 0.4, color: Colors3D.targetWhite },
-      { radius: 0.3, color: Colors3D.targetBlue },
-      { radius: 0.2, color: Colors3D.targetRed },
-      { radius: 0.1, color: Colors3D.targetYellow },
+      { radius: 0.55, color: Colors3D.targetRed },
+      { radius: 0.44, color: Colors3D.targetWhite },
+      { radius: 0.33, color: Colors3D.targetBlue },
+      { radius: 0.22, color: Colors3D.targetRed },
+      { radius: 0.11, color: Colors3D.targetYellow },
     ];
 
     rings.forEach((ring, i) => {
@@ -63,7 +78,7 @@ export class Target3D {
       );
       const mat = new THREE.MeshLambertMaterial({ color: ring.color });
       const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.z = -i * 0.005;
+      mesh.position.z = -i * 0.006;
       mesh.rotation.x = Math.PI / 2;
       this.mesh.add(mesh);
     });
@@ -161,6 +176,13 @@ export class Target3D {
           this.mesh.position.y = this.basePos.y + Math.sin(t) * r;
           break;
       }
+    }
+
+    // Face camera
+    if (this.camera) {
+      const lookPos = this.camera.position.clone();
+      lookPos.y = this.mesh.position.y;
+      this.mesh.lookAt(lookPos);
     }
   }
 

@@ -9,7 +9,9 @@ import { AimSystem3D } from './AimSystem3D';
 import { HUD3D } from '../ui/HUD3D';
 import { LevelCompleteScreen } from '../ui/LevelCompleteScreen';
 import { GameOverScreen } from '../ui/GameOverScreen';
+import { GameSettings } from '../config/gameConfig';
 import type { Engine3D } from './Engine3D';
+import * as THREE from 'three';
 
 export class Game3D {
   private engine: Engine3D;
@@ -27,6 +29,7 @@ export class Game3D {
   private canShoot: boolean = false;
   private shootCooldown: number = 0;
   private finished: boolean = false;
+  private lastAssistedDir: THREE.Vector3 | null = null;
 
   constructor(engine: Engine3D, level: number) {
     this.engine = engine;
@@ -46,7 +49,7 @@ export class Game3D {
 
     // Targets
     levelConfig.targets.forEach(tc => {
-      this.targets.push(new Target3D(engine.scene, tc));
+      this.targets.push(new Target3D(engine.scene, tc, engine.camera));
     });
 
     // Aim system
@@ -82,7 +85,8 @@ export class Game3D {
     this.archer.hideArrow();
 
     const startPos = this.archer.getShootPosition();
-    const direction = this.archer.getShootDirection(angleH, angleV);
+    // Use aim-assisted direction if available
+    let direction = this.lastAssistedDir || this.archer.getShootDirection(angleH, angleV);
 
     const levelConfig = levels[this.level - 1];
     const arrow = new Arrow3D(
@@ -97,6 +101,37 @@ export class Game3D {
     this.shootCooldown = 0.5;
   }
 
+  private applyAimAssist(shootPos: THREE.Vector3, shootDir: THREE.Vector3): THREE.Vector3 {
+    let closestDist = Infinity;
+    let closestTargetDir: THREE.Vector3 | null = null;
+
+    for (const target of this.targets) {
+      if (target.isHit()) continue;
+      const targetPos = target.getPosition();
+      const toTarget = targetPos.clone().sub(shootPos).normalize();
+
+      // Angle between aim direction and direction to target
+      const angle = shootDir.angleTo(toTarget);
+      const assistRadius = GameSettings.aimAssistRadius * (Math.PI / 180);
+
+      if (angle < assistRadius && angle < closestDist) {
+        closestDist = angle;
+        closestTargetDir = toTarget;
+      }
+    }
+
+    if (closestTargetDir) {
+      // Blend toward target direction
+      const t = GameSettings.aimAssistStrength * (1 - closestDist / (GameSettings.aimAssistRadius * Math.PI / 180));
+      const assisted = shootDir.clone().lerp(closestTargetDir, t).normalize();
+      this.lastAssistedDir = assisted;
+      return assisted;
+    }
+
+    this.lastAssistedDir = null;
+    return shootDir;
+  }
+
   update(delta: number): void {
     if (this.shootCooldown > 0) {
       this.shootCooldown -= delta;
@@ -109,9 +144,15 @@ export class Game3D {
     // Archer animation
     this.archer.update(delta, input.aimAngleH, input.aimAngleV, input.power, input.isAiming);
 
-    // Aim system
+    // Aim system with aim-assist
     const shootPos = this.archer.getShootPosition();
-    const shootDir = this.archer.getShootDirection(input.aimAngleH, input.aimAngleV);
+    let shootDir = this.archer.getShootDirection(input.aimAngleH, input.aimAngleV);
+
+    // Aim-assist: snap direction toward nearest target
+    if (input.isAiming && input.power > 0) {
+      shootDir = this.applyAimAssist(shootPos, shootDir);
+    }
+
     this.aimSystem.update(shootPos, shootDir, input.power, input.isAiming);
 
     // Targets

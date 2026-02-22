@@ -11,34 +11,40 @@ export class AimSystem3D {
 
     // Crosshair (3D indicator in the scene)
     this.crosshair = new THREE.Group();
-    const ringGeo = new THREE.RingGeometry(0.15, 0.2, 24);
+    const ringGeo = new THREE.RingGeometry(0.25, 0.32, 32);
     const ringMat = new THREE.MeshBasicMaterial({
-      color: Colors3D.aimLine,
+      color: 0xff4444,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.85,
     });
     const ring = new THREE.Mesh(ringGeo, ringMat);
     this.crosshair.add(ring);
 
     // Center dot
-    const dotGeo = new THREE.CircleGeometry(0.04, 12);
-    const dot = new THREE.Mesh(dotGeo, ringMat);
+    const dotGeo = new THREE.CircleGeometry(0.06, 12);
+    const dotMat = new THREE.MeshBasicMaterial({
+      color: 0xff0000,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.9,
+    });
+    const dot = new THREE.Mesh(dotGeo, dotMat);
     this.crosshair.add(dot);
 
     // Cross lines
-    const lineMat = new THREE.LineBasicMaterial({ color: Colors3D.aimLine, transparent: true, opacity: 0.5 });
+    const lineMat = new THREE.LineBasicMaterial({ color: 0xff4444, transparent: true, opacity: 0.7 });
     const hLine = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-0.25, 0, 0),
-        new THREE.Vector3(0.25, 0, 0),
+        new THREE.Vector3(-0.4, 0, 0),
+        new THREE.Vector3(0.4, 0, 0),
       ]),
       lineMat
     );
     const vLine = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, -0.25, 0),
-        new THREE.Vector3(0, 0.25, 0),
+        new THREE.Vector3(0, -0.4, 0),
+        new THREE.Vector3(0, 0.4, 0),
       ]),
       lineMat
     );

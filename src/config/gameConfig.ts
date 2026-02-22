@@ -51,15 +51,17 @@ export const CameraSettings = {
 };
 
 export const GameSettings = {
-  arrowSpeed: 35,
-  gravity: 9.8,
+  arrowSpeed: 50,
+  gravity: 3.0,
   windMax: 3,
-  hitRadiusMultiplier: 1.6,
-  minPower: 0.15,
+  hitRadiusMultiplier: 2.2,
+  minPower: 0.08,
   maxPower: 1.0,
   powerChargeSpeed: 1.2,
   aimLineLength: 0.35,
   maxAimAngleH: Math.PI / 4,
-  maxAimAngleV: Math.PI / 8,
+  maxAimAngleV: Math.PI / 6,
   archerHeight: 1.7,
+  aimAssistRadius: 1.5,
+  aimAssistStrength: 0.3,
 };

@@ -68,12 +68,12 @@ export class InputManager3D {
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
 
-    // Horizontal aim
-    this.state.aimAngleH = -(dx / (w * 0.4)) * GameSettings.maxAimAngleH;
+    // Horizontal aim (less finger movement needed)
+    this.state.aimAngleH = (dx / (w * 0.25)) * GameSettings.maxAimAngleH;
     this.state.aimAngleH = Math.max(-GameSettings.maxAimAngleH, Math.min(GameSettings.maxAimAngleH, this.state.aimAngleH));
 
     // Vertical aim (swipe up = aim higher)
-    this.state.aimAngleV = -(dy / (h * 0.4)) * GameSettings.maxAimAngleV;
+    this.state.aimAngleV = -(dy / (h * 0.25)) * GameSettings.maxAimAngleV;
     this.state.aimAngleV = Math.max(-GameSettings.maxAimAngleV * 0.5, Math.min(GameSettings.maxAimAngleV, this.state.aimAngleV));
   }
 
