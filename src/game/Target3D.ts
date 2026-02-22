@@ -47,41 +47,83 @@ export class Target3D {
   }
 
   private createTarget(): void {
-    // White background disc for contrast
-    const bgGeo = new THREE.CylinderGeometry(
-      0.6 * this.config.scale,
-      0.6 * this.config.scale,
-      0.04,
-      24
-    );
-    const bgMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-    const bgDisc = new THREE.Mesh(bgGeo, bgMat);
-    bgDisc.position.z = 0.005;
-    bgDisc.rotation.x = Math.PI / 2;
-    this.mesh.add(bgDisc);
+    const s = this.config.scale;
+    const radius = 0.6 * s;
 
-    // Concentric colored rings
-    const rings = [
-      { radius: 0.55, color: Colors3D.targetRed },
-      { radius: 0.44, color: Colors3D.targetWhite },
-      { radius: 0.33, color: Colors3D.targetBlue },
-      { radius: 0.22, color: Colors3D.targetRed },
-      { radius: 0.11, color: Colors3D.targetYellow },
+    // Draw target face on canvas texture (standard archery target)
+    const canvas = document.createElement('canvas');
+    const size = 256;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    const cx = size / 2;
+    const cy = size / 2;
+    const maxR = size / 2 - 4;
+
+    // 10 rings from outside: white, white, black, black, blue, blue, red, red, gold, gold
+    const ringColors = [
+      '#ffffff', '#ffffff',
+      '#000000', '#000000',
+      '#00a2e8', '#00a2e8',
+      '#ed1c24', '#ed1c24',
+      '#fff200', '#fff200',
     ];
 
-    rings.forEach((ring, i) => {
-      const geo = new THREE.CylinderGeometry(
-        ring.radius * this.config.scale,
-        ring.radius * this.config.scale,
-        0.05,
-        24
-      );
-      const mat = new THREE.MeshLambertMaterial({ color: ring.color });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.z = -i * 0.006;
-      mesh.rotation.x = Math.PI / 2;
-      this.mesh.add(mesh);
-    });
+    // Draw rings from outside in
+    for (let i = 0; i < 10; i++) {
+      const r = maxR * (1 - i / 10);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = ringColors[i];
+      ctx.fill();
+      // Ring border
+      ctx.strokeStyle = i < 4 ? '#444' : '#333';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Bullseye X
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    const bR = maxR * 0.05;
+    ctx.beginPath();
+    ctx.moveTo(cx - bR, cy - bR);
+    ctx.lineTo(cx + bR, cy + bR);
+    ctx.moveTo(cx + bR, cy - bR);
+    ctx.lineTo(cx - bR, cy + bR);
+    ctx.stroke();
+
+    // Outer border
+    ctx.beginPath();
+    ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    // Front face
+    const faceGeo = new THREE.CircleGeometry(radius, 32);
+    const faceMat = new THREE.MeshLambertMaterial({ map: texture, side: THREE.FrontSide });
+    const face = new THREE.Mesh(faceGeo, faceMat);
+    face.rotation.y = Math.PI; // face toward camera (negative Z)
+    this.mesh.add(face);
+
+    // Back face (plain wood color)
+    const backGeo = new THREE.CircleGeometry(radius, 32);
+    const backMat = new THREE.MeshLambertMaterial({ color: Colors3D.wood, side: THREE.FrontSide });
+    const back = new THREE.Mesh(backGeo, backMat);
+    back.position.z = 0.04;
+    this.mesh.add(back);
+
+    // Rim (edge thickness)
+    const rimGeo = new THREE.CylinderGeometry(radius, radius, 0.04, 32);
+    const rimMat = new THREE.MeshLambertMaterial({ color: Colors3D.wood });
+    const rim = new THREE.Mesh(rimGeo, rimMat);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.z = 0.02;
+    this.mesh.add(rim);
 
     // Stand
     const standMat = new THREE.MeshLambertMaterial({ color: Colors3D.wood });

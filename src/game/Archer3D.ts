@@ -251,13 +251,13 @@ export class Archer3D {
     const breathe = Math.sin(this.breatheOffset) * 0.005;
     this.body.position.y = breathe;
 
-    // Rotate body to aim direction
-    this.group.rotation.y = -aimH * 0.5;
+    // Rotate body to aim direction (full tracking)
+    this.group.rotation.y = -aimH;
 
     // Bow arm – extends forward when aiming
     if (isAiming || power > 0) {
       this.bowArmGroup.rotation.x = -Math.PI / 2 + 0.1 + aimV * 0.3;
-      this.bowArmGroup.rotation.z = -aimH * 0.2;
+      this.bowArmGroup.rotation.z = -aimH * 0.15;
 
       // Draw arm pulls back
       const pullBack = power * 0.6;
@@ -267,15 +267,15 @@ export class Archer3D {
       // Update string
       this.updateString(power);
 
-      // Show arrow
+      // Show arrow (no extra rotation – inherits from group)
       this.arrowOnBow.visible = power > 0;
       if (power > 0) {
         this.arrowOnBow.position.z = -0.6 + power * 0.25;
-        this.arrowOnBow.rotation.y = -aimH * 0.5;
+        this.arrowOnBow.rotation.y = 0;
       }
 
-      // Bow follows aim
-      this.bowMesh.rotation.y = -aimH * 0.3;
+      // Bow follows aim (no extra horizontal rotation – inherits from group)
+      this.bowMesh.rotation.y = 0;
       this.bowMesh.rotation.x = aimV * 0.2;
     } else {
       // Idle

@@ -62,6 +62,6 @@ export const GameSettings = {
   maxAimAngleH: Math.PI / 4,
   maxAimAngleV: Math.PI / 6,
   archerHeight: 1.7,
-  aimAssistRadius: 1.5,
-  aimAssistStrength: 0.3,
+  aimAssistRadius: 8,
+  aimAssistStrength: 0.35,
 };
