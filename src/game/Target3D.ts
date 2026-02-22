@@ -50,27 +50,26 @@ export class Target3D {
     const s = this.config.scale;
     const radius = 0.6 * s;
 
-    // Build target from concentric colored circle meshes (no textures)
-    const rings: { outerR: number; color: number }[] = [
-      { outerR: 1.0, color: 0x0074d9 },  // blue outer
-      { outerR: 0.75, color: 0xffffff },  // white ring
-      { outerR: 0.55, color: 0xe0342e },  // red ring
-      { outerR: 0.35, color: 0xffffff },  // white ring
-      { outerR: 0.18, color: 0xe0342e },  // red bullseye
+    // Non-overlapping ring bands (no z-fighting since geometry doesn't overlap)
+    const bands: { inner: number; outer: number; color: number }[] = [
+      { inner: 0.75, outer: 1.0,  color: 0x0074d9 },  // blue
+      { inner: 0.55, outer: 0.75, color: 0xffffff },  // white
+      { inner: 0.35, outer: 0.55, color: 0xe0342e },  // red
+      { inner: 0.18, outer: 0.35, color: 0xffffff },  // white
     ];
 
-    rings.forEach((ring, i) => {
-      const geo = new THREE.CircleGeometry(radius * ring.outerR, 48);
-      const mat = new THREE.MeshBasicMaterial({
-        color: ring.color,
-        side: THREE.DoubleSide,
-      });
-      const disc = new THREE.Mesh(geo, mat);
-      disc.position.z = 0.001 * (i + 1); // stack slightly forward so inner rings render on top
-      this.mesh.add(disc);
-    });
+    for (const band of bands) {
+      const geo = new THREE.RingGeometry(radius * band.inner, radius * band.outer, 48);
+      const mat = new THREE.MeshBasicMaterial({ color: band.color, side: THREE.DoubleSide });
+      this.mesh.add(new THREE.Mesh(geo, mat));
+    }
 
-    // Rim (edge thickness)
+    // Bullseye center disc
+    const centerGeo = new THREE.CircleGeometry(radius * 0.18, 48);
+    const centerMat = new THREE.MeshBasicMaterial({ color: 0xe0342e, side: THREE.DoubleSide });
+    this.mesh.add(new THREE.Mesh(centerGeo, centerMat));
+
+    // Rim
     const rimGeo = new THREE.CylinderGeometry(radius, radius, 0.04, 32);
     const rimMat = new THREE.MeshLambertMaterial({ color: Colors3D.wood });
     const rim = new THREE.Mesh(rimGeo, rimMat);
