@@ -98,31 +98,63 @@ export class Target3D {
   }
 
   private createDuck(): void {
-    const duckMat = new THREE.MeshLambertMaterial({ color: 0xffeb3b });
-    // Body
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.3 * this.config.scale, 10, 8), duckMat);
-    body.scale.set(1.2, 0.9, 1);
+    const s = this.config.scale;
+
+    // Rubber duck facing +Z (toward camera after lookAt)
+    const bodyMat = new THREE.MeshLambertMaterial({ color: 0xffd700 });
+    const brightYellow = new THREE.MeshLambertMaterial({ color: 0xffeb3b });
+
+    // Body - large round shape
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.45 * s, 16, 12), bodyMat);
+    body.scale.set(1.1, 0.85, 1.0);
     this.mesh.add(body);
 
+    // Belly highlight
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.35 * s, 12, 10), brightYellow);
+    belly.position.set(0, -0.08 * s, 0.1 * s);
+    belly.scale.set(0.9, 0.7, 0.8);
+    this.mesh.add(belly);
+
     // Head
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18 * this.config.scale, 8, 6), duckMat);
-    head.position.set(0, 0.2 * this.config.scale, -0.2 * this.config.scale);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.25 * s, 14, 10), bodyMat);
+    head.position.set(0, 0.35 * s, 0.15 * s);
     this.mesh.add(head);
 
-    // Beak
-    const beakMat = new THREE.MeshLambertMaterial({ color: 0xff9800 });
-    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.06 * this.config.scale, 0.15 * this.config.scale, 6), beakMat);
-    beak.position.set(0, 0.2 * this.config.scale, -0.38 * this.config.scale);
-    beak.rotation.x = -Math.PI / 2;
+    // Beak (orange, pointing toward +Z / camera)
+    const beakMat = new THREE.MeshLambertMaterial({ color: 0xff6d00 });
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.09 * s, 0.22 * s, 8), beakMat);
+    beak.position.set(0, 0.3 * s, 0.4 * s);
+    beak.rotation.x = Math.PI / 2;
     this.mesh.add(beak);
 
-    // Eyes
-    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-    const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 4), eyeMat);
-    leftEye.position.set(-0.08 * this.config.scale, 0.25 * this.config.scale, -0.3 * this.config.scale);
-    const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 4), eyeMat);
-    rightEye.position.set(0.08 * this.config.scale, 0.25 * this.config.scale, -0.3 * this.config.scale);
-    this.mesh.add(leftEye, rightEye);
+    // Eyes - white sclera + black pupil
+    const scleraMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+
+    for (const side of [-1, 1]) {
+      const sclera = new THREE.Mesh(new THREE.SphereGeometry(0.06 * s, 8, 6), scleraMat);
+      sclera.position.set(side * 0.12 * s, 0.42 * s, 0.3 * s);
+      this.mesh.add(sclera);
+
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.03 * s, 6, 4), pupilMat);
+      pupil.position.set(side * 0.12 * s, 0.42 * s, 0.36 * s);
+      this.mesh.add(pupil);
+    }
+
+    // Wings
+    const wingMat = new THREE.MeshLambertMaterial({ color: 0xf0c800 });
+    for (const side of [-1, 1]) {
+      const wing = new THREE.Mesh(new THREE.SphereGeometry(0.18 * s, 8, 6), wingMat);
+      wing.position.set(side * 0.38 * s, 0.05 * s, -0.05 * s);
+      wing.scale.set(0.5, 0.7, 1.0);
+      this.mesh.add(wing);
+    }
+
+    // Tail feathers
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.1 * s, 0.18 * s, 6), bodyMat);
+    tail.position.set(0, 0.15 * s, -0.42 * s);
+    tail.rotation.x = -Math.PI / 3;
+    this.mesh.add(tail);
   }
 
   private createEmoji(index: number): void {
