@@ -251,8 +251,8 @@ export class Archer3D {
     const breathe = Math.sin(this.breatheOffset) * 0.005;
     this.body.position.y = breathe;
 
-    // Rotate body to aim direction (full tracking)
-    this.group.rotation.y = -aimH;
+    // Rotate body to aim direction (mirrored for camera facing +Z)
+    this.group.rotation.y = aimH;
 
     // Bow arm – extends forward when aiming
     if (isAiming || power > 0) {

@@ -105,9 +105,9 @@ export class Target3D {
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
 
-    // Front face
+    // Front face – use BasicMaterial so texture colors show regardless of lighting
     const faceGeo = new THREE.CircleGeometry(radius, 32);
-    const faceMat = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
+    const faceMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
     const face = new THREE.Mesh(faceGeo, faceMat);
     this.mesh.add(face);
 
