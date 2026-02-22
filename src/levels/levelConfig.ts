@@ -181,23 +181,23 @@ export const levels: LevelConfig[] = [
     subtitle: 'Triff die Emojis! 😜',
     targets: [
       {
-        x: -3, y: 2, z: 30, scale: 1.05, type: 'emoji', emojiIndex: 0,
+        x: -3, y: 2, z: 30, scale: 1.5, type: 'emoji', emojiIndex: 0,
         movement: { pattern: 'circle', speed: 28, range: 30 },
       },
       {
-        x: 0, y: 2.5, z: 35, scale: 1.0, type: 'emoji', emojiIndex: 1,
+        x: 0, y: 2.5, z: 35, scale: 1.4, type: 'emoji', emojiIndex: 1,
         movement: { pattern: 'sine', speed: 35, range: 40 },
       },
       {
-        x: 3, y: 2, z: 32, scale: 1.05, type: 'emoji', emojiIndex: 2,
+        x: 3, y: 2, z: 32, scale: 1.5, type: 'emoji', emojiIndex: 2,
         movement: { pattern: 'horizontal', speed: 38, range: 45 },
       },
       {
-        x: -1.5, y: 3, z: 38, scale: 0.95, type: 'emoji', emojiIndex: 3,
+        x: -1.5, y: 3, z: 38, scale: 1.35, type: 'emoji', emojiIndex: 3,
         movement: { pattern: 'circle', speed: 30, range: 35 },
       },
       {
-        x: 2, y: 2.5, z: 36, scale: 1.0, type: 'emoji', emojiIndex: 4,
+        x: 2, y: 2.5, z: 36, scale: 1.4, type: 'emoji', emojiIndex: 4,
         movement: { pattern: 'sine', speed: 42, range: 38 },
       },
     ],
