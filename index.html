@@ -29,10 +29,54 @@
       align-items: center;
     }
     canvas { display: block; }
+    #update-banner {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      background: linear-gradient(135deg, #e94560, #c62a45);
+      color: #fff;
+      text-align: center;
+      padding: 16px 20px;
+      font-family: Arial, sans-serif;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+      -webkit-tap-highlight-color: transparent;
+      animation: slideUp 0.4s ease-out;
+    }
+    #update-banner:active { background: linear-gradient(135deg, #c62a45, #a01f38); }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
   <div id="game-container"></div>
+  <div id="update-banner" onclick="location.reload(true)">🔄 Neue Version verfügbar — Bitte aktualisieren</div>
+  <script>
+    (function() {
+      var currentVersion = null;
+      function checkVersion() {
+        fetch('/version.json?t=' + Date.now())
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (currentVersion === null) {
+              currentVersion = data.version;
+            } else if (data.version !== currentVersion) {
+              document.getElementById('update-banner').style.display = 'block';
+            }
+          })
+          .catch(function() {});
+      }
+      checkVersion();
+      setInterval(checkVersion, 30000);
+    })();
+  </script>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
