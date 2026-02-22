@@ -1,0 +1,22 @@
+{
+  "name": "bow-and-arrow",
+  "version": "1.0.0",
+  "description": "Ziel Scheiben Schiessen Leicht Gemacht - A 2.5D archery game",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["game", "archery", "phaser"],
+  "author": "Ansgar Schulte <ansgar@steadybit.com>",
+  "license": "ISC",
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}
