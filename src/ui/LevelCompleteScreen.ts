@@ -69,16 +69,20 @@ export class LevelCompleteScreen {
       </div>
     `;
 
-    document.getElementById('btn-next')?.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      this.hide();
-      data.onNext();
-    });
-    document.getElementById('btn-menu')?.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      this.hide();
-      data.onMenu();
-    });
+    const addButtonHandler = (id: string, handler: () => void) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const action = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handler();
+      };
+      btn.addEventListener('touchstart', action, { passive: false });
+      btn.addEventListener('click', action);
+    };
+
+    addButtonHandler('btn-next', () => { this.hide(); data.onNext(); });
+    addButtonHandler('btn-menu', () => { this.hide(); data.onMenu(); });
   }
 
   hide(): void {

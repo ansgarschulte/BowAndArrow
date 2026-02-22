@@ -27,16 +27,20 @@ export class GameOverScreen {
       </div>
     `;
 
-    document.getElementById('btn-retry')?.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      this.hide();
-      data.onRetry();
-    });
-    document.getElementById('btn-menu-go')?.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      this.hide();
-      data.onMenu();
-    });
+    const addButtonHandler = (id: string, handler: () => void) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const action = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handler();
+      };
+      btn.addEventListener('touchstart', action, { passive: false });
+      btn.addEventListener('click', action);
+    };
+
+    addButtonHandler('btn-retry', () => { this.hide(); data.onRetry(); });
+    addButtonHandler('btn-menu-go', () => { this.hide(); data.onMenu(); });
   }
 
   hide(): void {
