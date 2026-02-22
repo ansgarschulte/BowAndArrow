@@ -141,6 +141,7 @@ export class Arrow {
 
   deactivate(): void {
     this.active = false;
+    this.fadeOut();
   }
 
   destroy(): void {

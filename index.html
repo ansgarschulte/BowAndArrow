@@ -34,9 +34,10 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
-    canvas { display: block; }
+    canvas { display: block; width: 100% !important; height: 100% !important; object-fit: cover; }
     #update-banner {
       display: none;
       position: fixed;
