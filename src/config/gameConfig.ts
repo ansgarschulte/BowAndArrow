@@ -27,11 +27,12 @@ export const Colors = {
 
 export const GameSettings = {
   maxArrows: 8,
-  aimLineLength: 0.3, // 30% of distance to target
-  minPower: 0.2,
+  aimLineLength: 0.45, // 45% of distance to target
+  minPower: 0.15,
   maxPower: 1.0,
-  powerChargeSpeed: 0.8, // seconds to full charge
-  arrowSpeed: 600,
-  gravity: 200,
-  windMax: 50,
+  powerChargeSpeed: 1.2, // seconds to full charge (slower = easier to control)
+  arrowSpeed: 500,
+  gravity: 140,
+  windMax: 35,
+  hitRadiusMultiplier: 1.6, // forgiving hit detection
 };

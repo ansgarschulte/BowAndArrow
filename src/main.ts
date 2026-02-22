@@ -15,10 +15,18 @@ const config: Phaser.Types.Core.GameConfig = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
+    min: {
+      width: 320,
+      height: 480,
+    },
+    max: {
+      width: 1024,
+      height: 1366,
+    },
   },
   scene: [BootScene, MenuScene, GameScene, LevelCompleteScene, GameOverScene],
   input: {
-    activePointers: 1,
+    activePointers: 2,
   },
   render: {
     pixelArt: false,

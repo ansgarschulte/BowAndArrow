@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { GameSettings } from '../config/gameConfig';
 import { TargetConfig } from '../levels/levelConfig';
 
 export class Target {
@@ -27,7 +28,7 @@ export class Target {
 
     this.sprite.setScale(config.scale);
     this.sprite.setDepth(3);
-    this.hitRadius = 30 * config.scale;
+    this.hitRadius = 30 * config.scale * GameSettings.hitRadiusMultiplier;
   }
 
   update(delta: number): void {

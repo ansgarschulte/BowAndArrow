@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GameSettings, Colors } from '../config/gameConfig';
+import { GameSettings, Colors, GAME_HEIGHT } from '../config/gameConfig';
 
 export class Arrow {
   private scene: Phaser.Scene;
@@ -46,7 +46,7 @@ export class Arrow {
     this.y += this.vy * dt;
 
     // 2.5D: scale down as arrow "moves away"
-    const progress = Math.max(0, 1 - (this.y / 844) * 0.5);
+    const progress = Math.max(0, 1 - (this.y / GAME_HEIGHT) * 0.5);
     this.scale = Phaser.Math.Clamp(progress, 0.3, 1);
 
     // Trail
