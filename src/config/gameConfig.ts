@@ -65,3 +65,82 @@ export const GameSettings = {
   aimAssistRadius: 8,
   aimAssistStrength: 0.35,
 };
+
+// --- Bow types ---
+
+export type BowType = 'classic' | 'fire' | 'ice' | 'lightning' | 'gold';
+
+export interface BowConfig {
+  name: string;
+  emoji: string;
+  bowColor: number;
+  arrowColor: number;
+  tipColor: number;
+  trailColor: number;
+  particleColors: number[];
+  glowColor?: number;
+}
+
+export const BowTypes: Record<BowType, BowConfig> = {
+  classic: {
+    name: 'Klassisch',
+    emoji: '🏹',
+    bowColor: 0x8d6e63,
+    arrowColor: 0x5d4037,
+    tipColor: 0x9e9e9e,
+    trailColor: 0xffeb3b,
+    particleColors: [],
+  },
+  fire: {
+    name: 'Feuerbogen',
+    emoji: '🔥',
+    bowColor: 0xd84315,
+    arrowColor: 0x4e342e,
+    tipColor: 0xff6f00,
+    trailColor: 0xff5722,
+    particleColors: [0xff6d00, 0xff9100, 0xffab00, 0xff3d00],
+    glowColor: 0xff6600,
+  },
+  ice: {
+    name: 'Eisbogen',
+    emoji: '❄️',
+    bowColor: 0x4fc3f7,
+    arrowColor: 0xb3e5fc,
+    tipColor: 0x80deea,
+    trailColor: 0x4dd0e1,
+    particleColors: [0x80deea, 0xb2ebf2, 0xe0f7fa, 0x4dd0e1],
+    glowColor: 0x00bcd4,
+  },
+  lightning: {
+    name: 'Blitzbogen',
+    emoji: '⚡',
+    bowColor: 0xfbc02d,
+    arrowColor: 0xf9a825,
+    tipColor: 0xfff176,
+    trailColor: 0xffee58,
+    particleColors: [0xffee58, 0xfff9c4, 0xfdd835, 0xffff00],
+    glowColor: 0xffd600,
+  },
+  gold: {
+    name: 'Goldbogen',
+    emoji: '👑',
+    bowColor: 0xffd700,
+    arrowColor: 0xdaa520,
+    tipColor: 0xffd700,
+    trailColor: 0xffe082,
+    particleColors: [0xffd700, 0xffe082, 0xffecb3, 0xffc107],
+    glowColor: 0xffab00,
+  },
+};
+
+export function getSelectedBow(): BowType {
+  try {
+    const saved = localStorage.getItem('bogen_bow_type');
+    if (saved && saved in BowTypes) return saved as BowType;
+  } catch { /* noop */ }
+  return 'classic';
+}
+
+export function setSelectedBow(bow: BowType): void {
+  try { localStorage.setItem('bogen_bow_type', bow); } catch { /* noop */ }
+}

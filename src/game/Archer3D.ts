@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Colors3D, GameSettings } from '../config/gameConfig';
+import { Colors3D, GameSettings, BowTypes, getSelectedBow } from '../config/gameConfig';
 
 export class Archer3D {
   public group: THREE.Group;
@@ -194,7 +194,7 @@ export class Archer3D {
       new THREE.Vector3(0, -0.45, 0)
     );
     const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.02, 8, false);
-    const bowMat = new THREE.MeshLambertMaterial({ color: Colors3D.wood });
+    const bowMat = new THREE.MeshLambertMaterial({ color: BowTypes[getSelectedBow()].bowColor });
     const bowCurve = new THREE.Mesh(tubeGeo, bowMat);
     this.bowMesh.add(bowCurve);
 

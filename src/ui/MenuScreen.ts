@@ -1,11 +1,16 @@
+import { getSelectedBow, BowTypes } from '../config/gameConfig';
+import { BowSelectScreen } from './BowSelectScreen';
+
 export class MenuScreen {
   private container: HTMLDivElement;
   private onLevelSelect: (level: number) => void;
+  private bowSelectScreen: BowSelectScreen;
 
   constructor(onLevelSelect: (level: number) => void) {
     this.onLevelSelect = onLevelSelect;
     this.container = document.createElement('div');
     this.container.id = 'menu-screen';
+    this.bowSelectScreen = new BowSelectScreen(() => this.show());
 
     const style = document.createElement('style');
     style.textContent = `
@@ -60,6 +65,16 @@ export class MenuScreen {
         -webkit-tap-highlight-color: transparent;
       }
       .cheat-btn:active { opacity: 1; }
+      .bow-select-btn {
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px; margin-top: 24px; padding: 12px 24px;
+        border: 2px solid #ffd700; border-radius: 14px;
+        background: rgba(255,215,0,0.1); color: #ffd700;
+        font-size: 17px; font-weight: bold; cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: transform 0.1s;
+      }
+      .bow-select-btn:active { transform: scale(0.95); }
     `;
     document.head.appendChild(style);
     document.body.appendChild(this.container);
@@ -82,6 +97,9 @@ export class MenuScreen {
           </button>`;
         }).join('')}
       </div>
+      <button class="bow-select-btn" id="btn-bow-select">
+        ${BowTypes[getSelectedBow()].emoji} ${BowTypes[getSelectedBow()].name}
+      </button>
       <button class="cheat-btn" id="cheat-unlock" title="Alle Level freischalten">🔓</button>
     `;
 
@@ -105,6 +123,18 @@ export class MenuScreen {
       };
       cheatBtn.addEventListener('touchstart', unlock, { passive: false });
       cheatBtn.addEventListener('click', unlock);
+    }
+
+    const bowBtn = document.getElementById('btn-bow-select');
+    if (bowBtn) {
+      const openBow = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.hide();
+        this.bowSelectScreen.show();
+      };
+      bowBtn.addEventListener('touchstart', openBow, { passive: false });
+      bowBtn.addEventListener('click', openBow);
     }
   }
 
