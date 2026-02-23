@@ -68,7 +68,7 @@ export const GameSettings = {
 
 // --- Bow types ---
 
-export type BowType = 'classic' | 'fire' | 'ice' | 'lightning' | 'gold';
+export type BowType = 'classic' | 'fire' | 'ice' | 'lightning' | 'gold' | 'triple';
 
 export interface BowConfig {
   name: string;
@@ -130,6 +130,16 @@ export const BowTypes: Record<BowType, BowConfig> = {
     trailColor: 0xffe082,
     particleColors: [0xffd700, 0xffe082, 0xffecb3, 0xffc107],
     glowColor: 0xffab00,
+  },
+  triple: {
+    name: 'Dreifachbogen',
+    emoji: '🏹🏹🏹',
+    bowColor: 0x7b1fa2,
+    arrowColor: 0x9c27b0,
+    tipColor: 0xce93d8,
+    trailColor: 0xba68c8,
+    particleColors: [0xce93d8, 0xba68c8, 0xab47bc, 0x8e24aa],
+    glowColor: 0x9c27b0,
   },
 };
 

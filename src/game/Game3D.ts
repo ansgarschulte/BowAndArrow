@@ -9,7 +9,7 @@ import { AimSystem3D } from './AimSystem3D';
 import { HUD3D } from '../ui/HUD3D';
 import { LevelCompleteScreen } from '../ui/LevelCompleteScreen';
 import { GameOverScreen } from '../ui/GameOverScreen';
-import { GameSettings } from '../config/gameConfig';
+import { GameSettings, getSelectedBow } from '../config/gameConfig';
 import type { Engine3D } from './Engine3D';
 import * as THREE from 'three';
 
@@ -97,6 +97,23 @@ export class Game3D {
       levelConfig.wind
     );
     this.arrows.push(arrow);
+
+    // Triple bow: fire two additional arrows at slight angles
+    if (getSelectedBow() === 'triple') {
+      const spread = 0.04; // ~2.3° spread
+      for (const sign of [-1, 1]) {
+        const offset = new THREE.Vector3().copy(direction);
+        offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), spread * sign);
+        const extra = new Arrow3D(
+          this.engine.scene,
+          startPos.clone(),
+          offset,
+          power,
+          levelConfig.wind
+        );
+        this.arrows.push(extra);
+      }
+    }
 
     this.shootCooldown = 0.5;
   }
