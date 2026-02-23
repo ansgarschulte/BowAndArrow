@@ -9,7 +9,7 @@ import { AimSystem3D } from './AimSystem3D';
 import { HUD3D } from '../ui/HUD3D';
 import { LevelCompleteScreen } from '../ui/LevelCompleteScreen';
 import { GameOverScreen } from '../ui/GameOverScreen';
-import { GameSettings, getSelectedBow } from '../config/gameConfig';
+import { GameSettings, getSelectedBow, BowTypes } from '../config/gameConfig';
 import type { Engine3D } from './Engine3D';
 import * as THREE from 'three';
 
@@ -89,6 +89,7 @@ export class Game3D {
     let direction = this.lastAssistedDir || this.archer.getShootDirection(angleH, angleV);
 
     const levelConfig = levels[this.level - 1];
+    const bowConfig = BowTypes[getSelectedBow()];
     const arrow = new Arrow3D(
       this.engine.scene,
       startPos,
@@ -98,9 +99,10 @@ export class Game3D {
     );
     this.arrows.push(arrow);
 
-    // Triple bow: fire two additional arrows at slight angles
-    if (getSelectedBow() === 'triple') {
-      const spread = 0.04; // ~2.3° spread
+    // Multi-shot bows (triple, air): fire additional arrows at slight angles
+    const extraShots = bowConfig.multiShot || (getSelectedBow() === 'triple' ? 3 : 0);
+    if (extraShots >= 3) {
+      const spread = 0.04;
       for (const sign of [-1, 1]) {
         const offset = new THREE.Vector3().copy(direction);
         offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), spread * sign);
@@ -189,6 +191,11 @@ export class Game3D {
           target.onHit();
           const points = this.scoreManager.registerHit(result.distance, 1);
           this.hud.showHitPoints(points);
+          // Spawn bow-specific hit effect
+          const bowCfg = BowTypes[getSelectedBow()];
+          if (bowCfg.hitEffect) {
+            this.spawnHitEffect(bowCfg.hitEffect, arrowPos.clone());
+          }
           arrow.deactivate();
           return false;
         }
@@ -248,5 +255,65 @@ export class Game3D {
     this.hud.destroy();
     this.levelComplete.hide();
     this.gameOver.hide();
+  }
+
+  private spawnHitEffect(type: 'smoke' | 'water', pos: THREE.Vector3): void {
+    const scene = this.engine.scene;
+    const count = type === 'smoke' ? 30 : 25;
+
+    for (let i = 0; i < count; i++) {
+      const size = type === 'smoke'
+        ? 0.15 + Math.random() * 0.25
+        : 0.06 + Math.random() * 0.12;
+
+      let color: number;
+      if (type === 'smoke') {
+        const gray = 0.4 + Math.random() * 0.5;
+        const c = Math.floor(gray * 255);
+        color = (c << 16) | (c << 8) | c;
+      } else {
+        const blues = [0x42a5f5, 0x64b5f6, 0x90caf9, 0x2196f3, 0xbbdefb, 0xffffff];
+        color = blues[Math.floor(Math.random() * blues.length)];
+      }
+
+      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 });
+      const geo = new THREE.SphereGeometry(size, 6, 6);
+      const p = new THREE.Mesh(geo, mat);
+      p.position.copy(pos);
+
+      // Velocity: smoke rises slowly outward, water splashes fast in all directions
+      const vx = (Math.random() - 0.5) * (type === 'smoke' ? 2 : 6);
+      const vy = Math.random() * (type === 'smoke' ? 3 : 8) + (type === 'smoke' ? 1 : 2);
+      const vz = (Math.random() - 0.5) * (type === 'smoke' ? 2 : 6);
+
+      scene.add(p);
+
+      const startTime = Date.now();
+      const duration = type === 'smoke' ? 1500 : 800;
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const t = elapsed / duration;
+        if (t >= 1) {
+          scene.remove(p);
+          geo.dispose();
+          mat.dispose();
+          return;
+        }
+        const dt = 0.016;
+        p.position.x += vx * dt;
+        p.position.y += vy * dt - (type === 'water' ? 9.8 * dt * t : 0);
+        p.position.z += vz * dt;
+
+        if (type === 'smoke') {
+          p.scale.setScalar(1 + t * 3);
+          mat.opacity = 0.85 * (1 - t);
+        } else {
+          p.scale.setScalar(1 - t * 0.5);
+          mat.opacity = 0.9 * (1 - t);
+        }
+        requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+    }
   }
 }

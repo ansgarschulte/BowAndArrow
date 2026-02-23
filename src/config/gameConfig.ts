@@ -68,7 +68,7 @@ export const GameSettings = {
 
 // --- Bow types ---
 
-export type BowType = 'classic' | 'fire' | 'ice' | 'lightning' | 'gold' | 'triple';
+export type BowType = 'classic' | 'fire' | 'ice' | 'lightning' | 'gold' | 'triple' | 'smoke' | 'air' | 'water';
 
 export interface BowConfig {
   name: string;
@@ -79,6 +79,8 @@ export interface BowConfig {
   trailColor: number;
   particleColors: number[];
   glowColor?: number;
+  hitEffect?: 'smoke' | 'water';
+  multiShot?: number;
 }
 
 export const BowTypes: Record<BowType, BowConfig> = {
@@ -140,6 +142,39 @@ export const BowTypes: Record<BowType, BowConfig> = {
     trailColor: 0xba68c8,
     particleColors: [0xce93d8, 0xba68c8, 0xab47bc, 0x8e24aa],
     glowColor: 0x9c27b0,
+  },
+  smoke: {
+    name: 'Rauchbogen',
+    emoji: '💨',
+    bowColor: 0x616161,
+    arrowColor: 0x424242,
+    tipColor: 0x9e9e9e,
+    trailColor: 0x757575,
+    particleColors: [0x9e9e9e, 0xbdbdbd, 0x757575, 0x616161],
+    glowColor: 0x9e9e9e,
+    hitEffect: 'smoke' as const,
+  },
+  air: {
+    name: 'Luftbogen',
+    emoji: '🌪️',
+    bowColor: 0x81d4fa,
+    arrowColor: 0xb3e5fc,
+    tipColor: 0xe1f5fe,
+    trailColor: 0x4fc3f7,
+    particleColors: [0xb3e5fc, 0x81d4fa, 0x4fc3f7, 0xe1f5fe],
+    glowColor: 0x29b6f6,
+    multiShot: 3,
+  },
+  water: {
+    name: 'Wasserbogen',
+    emoji: '💧',
+    bowColor: 0x1565c0,
+    arrowColor: 0x1e88e5,
+    tipColor: 0x42a5f5,
+    trailColor: 0x2196f3,
+    particleColors: [0x42a5f5, 0x64b5f6, 0x90caf9, 0x2196f3],
+    glowColor: 0x1e88e5,
+    hitEffect: 'water' as const,
   },
 };
 
