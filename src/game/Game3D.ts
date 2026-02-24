@@ -220,6 +220,7 @@ export class Game3D {
         this.finished = true;
         this.canShoot = false;
         setTimeout(() => {
+          this.inputManager.disableInput();
           this.levelComplete.show({
             level: this.level,
             score: this.scoreManager.getScore(),
@@ -233,6 +234,7 @@ export class Game3D {
         this.finished = true;
         this.canShoot = false;
         setTimeout(() => {
+          this.inputManager.disableInput();
           this.gameOver.show({
             level: this.level,
             score: this.scoreManager.getScore(),

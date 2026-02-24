@@ -107,5 +107,11 @@ export class InputManager3D {
     this.canvas.removeEventListener('pointermove', this.boundPointerMove);
     this.canvas.removeEventListener('pointerup', this.boundPointerUp);
     this.canvas.removeEventListener('pointercancel', this.boundPointerUp);
+    this.canvas.style.pointerEvents = '';
+  }
+
+  /** Call before showing any UI overlay so canvas doesn't swallow touch events */
+  disableInput(): void {
+    this.canvas.style.pointerEvents = 'none';
   }
 }
