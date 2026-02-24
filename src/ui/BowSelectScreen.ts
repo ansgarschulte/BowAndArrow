@@ -28,7 +28,7 @@ export class BowSelectScreen {
       .bow-grid {
         display: grid; grid-template-columns: 1fr; gap: 12px;
         max-height: 60vh; overflow-y: auto; width: 100%;
-        padding: 4px;
+        padding: 4px; -webkit-overflow-scrolling: touch;
       }
       .bow-card {
         display: flex; align-items: center; gap: 14px;
@@ -37,6 +37,7 @@ export class BowSelectScreen {
         border: 2px solid transparent;
         cursor: pointer; transition: transform 0.1s;
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       .bow-card:active { transform: scale(0.97); }
       .bow-card.selected {
@@ -56,6 +57,7 @@ export class BowSelectScreen {
         padding: 14px 0; border: none; border-radius: 14px;
         font-size: 18px; font-weight: bold; color: #fff;
         cursor: pointer; -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       #bow-select .overlay-btn.secondary {
         background: linear-gradient(135deg, #555, #444);
@@ -92,27 +94,21 @@ export class BowSelectScreen {
     `;
 
     this.container.querySelectorAll('.bow-card').forEach(card => {
-      const handler = (e: Event) => {
-        e.preventDefault();
+      card.addEventListener('click', (e: Event) => {
         e.stopPropagation();
         const bow = (card as HTMLElement).dataset.bow as BowType;
         setSelectedBow(bow);
-        this.show(); // refresh to show selection
-      };
-      card.addEventListener('touchstart', handler, { passive: false });
-      card.addEventListener('click', handler);
+        this.show();
+      });
     });
 
     const backBtn = document.getElementById('bow-back');
     if (backBtn) {
-      const back = (e: Event) => {
-        e.preventDefault();
+      backBtn.addEventListener('click', (e: Event) => {
         e.stopPropagation();
         this.hide();
         this.onClose();
-      };
-      backBtn.addEventListener('touchstart', back, { passive: false });
-      backBtn.addEventListener('click', back);
+      });
     }
   }
 

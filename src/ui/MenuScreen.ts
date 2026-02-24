@@ -43,6 +43,7 @@ export class MenuScreen {
         border: none; font-size: 22px; font-weight: bold;
         cursor: pointer; transition: transform 0.1s;
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       .level-btn:active { transform: scale(0.92); }
       .level-btn.unlocked {
@@ -63,6 +64,7 @@ export class MenuScreen {
         background: none; border: none; font-size: 24px;
         cursor: pointer; opacity: 0.4; padding: 8px;
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       .cheat-btn:active { opacity: 1; }
       .bow-select-btn {
@@ -71,6 +73,7 @@ export class MenuScreen {
         border: 2px solid #ffd700; border-radius: 14px;
         background: rgba(255,215,0,0.1); color: #ffd700;
         font-size: 17px; font-weight: bold; cursor: pointer;
+        touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
         transition: transform 0.1s;
       }
@@ -104,37 +107,28 @@ export class MenuScreen {
     `;
 
     this.container.querySelectorAll('.level-btn.unlocked').forEach(btn => {
-      const handler = (e: Event) => {
-        e.preventDefault();
+      btn.addEventListener('click', (e: Event) => {
         const level = parseInt((btn as HTMLElement).dataset.level || '1', 10);
         this.onLevelSelect(level);
-      };
-      btn.addEventListener('touchstart', handler, { passive: false });
-      btn.addEventListener('click', handler);
+      });
     });
 
     const cheatBtn = document.getElementById('cheat-unlock');
     if (cheatBtn) {
-      const unlock = (e: Event) => {
-        e.preventDefault();
+      cheatBtn.addEventListener('click', (e: Event) => {
         e.stopPropagation();
         localStorage.setItem('bogen_progress', '10');
         this.show();
-      };
-      cheatBtn.addEventListener('touchstart', unlock, { passive: false });
-      cheatBtn.addEventListener('click', unlock);
+      });
     }
 
     const bowBtn = document.getElementById('btn-bow-select');
     if (bowBtn) {
-      const openBow = (e: Event) => {
-        e.preventDefault();
+      bowBtn.addEventListener('click', (e: Event) => {
         e.stopPropagation();
         this.hide();
         this.bowSelectScreen.show();
-      };
-      bowBtn.addEventListener('touchstart', openBow, { passive: false });
-      bowBtn.addEventListener('click', openBow);
+      });
     }
   }
 

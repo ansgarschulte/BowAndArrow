@@ -30,12 +30,13 @@ export class GameOverScreen {
     const addButtonHandler = (id: string, handler: () => void) => {
       const btn = document.getElementById(id);
       if (!btn) return;
+      let handled = false;
       const action = (e: Event) => {
-        e.preventDefault();
         e.stopPropagation();
+        if (handled) return;
+        handled = true;
         handler();
       };
-      btn.addEventListener('touchstart', action, { passive: false });
       btn.addEventListener('click', action);
     };
 

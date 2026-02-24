@@ -33,7 +33,7 @@ export class LevelCompleteScreen {
         font-size: 18px; font-weight: bold; color: #fff;
         background: linear-gradient(135deg, #e94560, #c62a45);
         cursor: pointer; -webkit-tap-highlight-color: transparent;
-        transition: transform 0.1s;
+        transition: transform 0.1s; touch-action: manipulation;
       }
       .overlay-btn:active { transform: scale(0.95); }
       .overlay-btn.secondary {
@@ -72,12 +72,13 @@ export class LevelCompleteScreen {
     const addButtonHandler = (id: string, handler: () => void) => {
       const btn = document.getElementById(id);
       if (!btn) return;
+      let handled = false;
       const action = (e: Event) => {
-        e.preventDefault();
         e.stopPropagation();
+        if (handled) return;
+        handled = true;
         handler();
       };
-      btn.addEventListener('touchstart', action, { passive: false });
       btn.addEventListener('click', action);
     };
 
