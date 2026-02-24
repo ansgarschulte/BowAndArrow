@@ -188,11 +188,12 @@ export class Game3D {
       for (const target of this.targets) {
         const result = target.checkHit(arrowPos);
         if (result.hit) {
-          target.onHit();
+          const bowType = getSelectedBow();
+          target.onHit(bowType);
           const points = this.scoreManager.registerHit(result.distance, 1);
           this.hud.showHitPoints(points);
-          // Spawn bow-specific hit effect
-          const bowCfg = BowTypes[getSelectedBow()];
+          // Additional large-area effects for smoke/water bows
+          const bowCfg = BowTypes[bowType];
           if (bowCfg.hitEffect) {
             this.spawnHitEffect(bowCfg.hitEffect, arrowPos.clone());
           }

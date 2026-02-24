@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Colors3D, GameSettings } from '../config/gameConfig';
+import { Colors3D, GameSettings, BowType } from '../config/gameConfig';
 
 export interface Target3DConfig {
   x: number;
@@ -229,20 +229,29 @@ export class Target3D {
     return { hit: false, distance: dist };
   }
 
-  onHit(): void {
+  onHit(bowType: BowType = 'classic'): void {
     this.hit = true;
-    this.createHitParticles();
 
-    // Fade out
-    const startTime = Date.now();
+    switch (bowType) {
+      case 'fire':    this.hitEffectFire();      break;
+      case 'ice':     this.hitEffectIce();       break;
+      case 'lightning': this.hitEffectLightning(); break;
+      case 'gold':    this.hitEffectGold();      break;
+      case 'water':   this.hitEffectWater();     break;
+      case 'smoke':   this.hitEffectSmoke();     break;
+      case 'air':     this.hitEffectAir();       break;
+      default:        this.hitEffectDefault();   break;
+    }
+  }
+
+  private fadeOutMesh(delay: number, duration: number, scale: number = 1.3): void {
+    const startTime = Date.now() + delay;
     const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = elapsed / 400;
-      if (progress >= 1) {
-        this.mesh.visible = false;
-        return;
-      }
-      const s = 1 + progress * 0.3;
+      const now = Date.now();
+      if (now < startTime) { requestAnimationFrame(animate); return; }
+      const progress = (now - startTime) / duration;
+      if (progress >= 1) { this.mesh.visible = false; return; }
+      const s = 1 + progress * (scale - 1);
       this.mesh.scale.set(s, s, s);
       this.mesh.traverse(child => {
         if (child instanceof THREE.Mesh) {
@@ -254,6 +263,123 @@ export class Target3D {
       requestAnimationFrame(animate);
     };
     animate();
+  }
+
+  private spawnBurst(colors: number[], count: number, speed: number, size: number, duration: number, rise: boolean = false): void {
+    const pos = this.mesh.position;
+    for (let i = 0; i < count; i++) {
+      const geo = new THREE.SphereGeometry(size + Math.random() * size, 5, 5);
+      const mat = new THREE.MeshBasicMaterial({ color: colors[Math.floor(Math.random() * colors.length)], transparent: true });
+      const p = new THREE.Mesh(geo, mat);
+      p.position.copy(pos);
+      this.scene.add(p);
+      const dir = new THREE.Vector3(
+        (Math.random() - 0.5) * 2,
+        rise ? Math.random() * 2 : (Math.random() - 0.5) * 2,
+        (Math.random() - 0.5) * 2
+      ).normalize().multiplyScalar(speed * (0.5 + Math.random() * 0.5));
+      const start = Date.now();
+      const tick = () => {
+        const t = (Date.now() - start) / duration;
+        if (t >= 1) { this.scene.remove(p); geo.dispose(); mat.dispose(); return; }
+        p.position.addScaledVector(dir, 0.016);
+        if (!rise) dir.y -= 9.8 * 0.016;
+        mat.opacity = 1 - t;
+        p.scale.setScalar(rise ? 1 + t * 2 : 1 - t * 0.5);
+        requestAnimationFrame(tick);
+      };
+      tick();
+    }
+  }
+
+  private spawnShards(colors: number[], count: number): void {
+    const pos = this.mesh.position;
+    for (let i = 0; i < count; i++) {
+      const w = 0.05 + Math.random() * 0.15;
+      const h = 0.15 + Math.random() * 0.25;
+      const geo = new THREE.BoxGeometry(w, h, 0.03);
+      const mat = new THREE.MeshBasicMaterial({ color: colors[Math.floor(Math.random() * colors.length)], transparent: true });
+      const p = new THREE.Mesh(geo, mat);
+      p.position.copy(pos);
+      p.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+      this.scene.add(p);
+      const vel = new THREE.Vector3((Math.random()-0.5)*6, Math.random()*5+2, (Math.random()-0.5)*6);
+      const rot = new THREE.Vector3((Math.random()-0.5)*10, (Math.random()-0.5)*10, (Math.random()-0.5)*10);
+      const start = Date.now();
+      const tick = () => {
+        const t = (Date.now() - start) / 700;
+        if (t >= 1) { this.scene.remove(p); geo.dispose(); mat.dispose(); return; }
+        p.position.addScaledVector(vel, 0.016);
+        vel.y -= 9.8 * 0.016;
+        p.rotation.x += rot.x * 0.016;
+        p.rotation.y += rot.y * 0.016;
+        mat.opacity = 1 - t;
+        requestAnimationFrame(tick);
+      };
+      tick();
+    }
+  }
+
+  private hitEffectDefault(): void {
+    this.createHitParticles();
+    this.fadeOutMesh(0, 400);
+  }
+
+  private hitEffectFire(): void {
+    // Tint target red/orange, then burn away with rising flames
+    this.mesh.traverse(child => {
+      if (child instanceof THREE.Mesh) {
+        (child.material as THREE.MeshBasicMaterial).color?.setHex(0xff4500);
+      }
+    });
+    this.spawnBurst([0xff6d00, 0xff9100, 0xffab00, 0xff3d00, 0xdd2c00], 25, 3, 0.07, 1200, true);
+    this.fadeOutMesh(100, 600);
+  }
+
+  private hitEffectIce(): void {
+    // Tint target icy blue, then shatter into shards
+    this.mesh.traverse(child => {
+      if (child instanceof THREE.Mesh) {
+        (child.material as THREE.MeshBasicMaterial).color?.setHex(0xa8d8ff);
+      }
+    });
+    this.spawnShards([0xb3e5fc, 0x81d4fa, 0xe1f5fe, 0xffffff, 0x4fc3f7], 18);
+    this.fadeOutMesh(50, 200);
+  }
+
+  private hitEffectLightning(): void {
+    // Flash white, then electric burst
+    this.mesh.traverse(child => {
+      if (child instanceof THREE.Mesh) {
+        (child.material as THREE.MeshBasicMaterial).color?.setHex(0xffffff);
+      }
+    });
+    this.spawnBurst([0xffff00, 0xfff9c4, 0xffd600, 0xffffff, 0xffe57f], 20, 7, 0.04, 500);
+    this.fadeOutMesh(0, 200);
+  }
+
+  private hitEffectGold(): void {
+    // Gold coin explosion sparkle
+    this.spawnBurst([0xffd700, 0xffe082, 0xffecb3, 0xffc107, 0xffffff], 22, 4, 0.06, 900);
+    this.fadeOutMesh(0, 500);
+  }
+
+  private hitEffectWater(): void {
+    // Water splash with blue droplets and scale-up
+    this.spawnBurst([0x42a5f5, 0x64b5f6, 0x90caf9, 0xbbdefb, 0xffffff], 20, 6, 0.06, 700);
+    this.fadeOutMesh(0, 350, 1.5);
+  }
+
+  private hitEffectSmoke(): void {
+    // Big gray smoke puffs expanding
+    this.spawnBurst([0x9e9e9e, 0xbdbdbd, 0x757575, 0x616161, 0xe0e0e0], 28, 1.5, 0.12, 1500, true);
+    this.fadeOutMesh(0, 600);
+  }
+
+  private hitEffectAir(): void {
+    // Wind swirl — light blue particles spinning outward
+    this.spawnBurst([0xb3e5fc, 0x81d4fa, 0xe1f5fe, 0xffffff, 0x4fc3f7], 18, 5, 0.05, 600);
+    this.fadeOutMesh(0, 300, 1.2);
   }
 
   private createHitParticles(): void {
