@@ -1,3 +1,5 @@
+import { levels } from '../levels/levelConfig';
+
 export class LevelCompleteScreen {
   private container: HTMLDivElement;
 
@@ -64,7 +66,7 @@ export class LevelCompleteScreen {
         <div class="stars">${starStr}</div>
         <div class="stats">Treffer: ${data.hits}/${data.totalTargets}</div>
         <div class="stats gold">Punkte: ${data.score}</div>
-        ${data.level < 10 ? '<button class="overlay-btn" id="btn-next">Nächstes Level ▶</button>' : ''}
+        ${data.level < levels.length ? '<button class="overlay-btn" id="btn-next">Nächstes Level ▶</button>' : ''}
         <button class="overlay-btn secondary" id="btn-menu">🏠 Menü</button>
       </div>
     `;

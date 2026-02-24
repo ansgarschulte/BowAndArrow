@@ -1,5 +1,6 @@
 import { getSelectedBow, BowTypes } from '../config/gameConfig';
 import { BowSelectScreen } from './BowSelectScreen';
+import { levels } from '../levels/levelConfig';
 
 export class MenuScreen {
   private container: HTMLDivElement;
@@ -35,12 +36,14 @@ export class MenuScreen {
         text-shadow: 0 1px 5px rgba(0,0,0,0.4);
       }
       .level-grid {
-        display: grid; grid-template-columns: repeat(5, 56px);
-        gap: 14px; margin-top: 8px;
+        display: grid; grid-template-columns: repeat(5, 48px);
+        gap: 10px; margin-top: 8px;
+        max-height: 55vh; overflow-y: auto;
+        -webkit-overflow-scrolling: touch; padding: 4px;
       }
       .level-btn {
-        width: 56px; height: 56px; border-radius: 14px;
-        border: none; font-size: 22px; font-weight: bold;
+        width: 48px; height: 48px; border-radius: 12px;
+        border: none; font-size: 20px; font-weight: bold;
         cursor: pointer; transition: transform 0.1s;
         -webkit-tap-highlight-color: transparent;
         touch-action: manipulation;
@@ -91,7 +94,7 @@ export class MenuScreen {
       <div class="menu-title">Ziel Scheiben<br>Schiessen</div>
       <div class="menu-subtitle">Leicht Gemacht</div>
       <div class="level-grid">
-        ${Array.from({ length: 10 }, (_, i) => {
+        ${Array.from({ length: levels.length }, (_, i) => {
           const level = i + 1;
           const unlocked = level <= maxLevel;
           return `<button class="level-btn ${unlocked ? 'unlocked' : 'locked'}" 
@@ -117,7 +120,7 @@ export class MenuScreen {
     if (cheatBtn) {
       cheatBtn.addEventListener('click', (e: Event) => {
         e.stopPropagation();
-        localStorage.setItem('bogen_progress', '10');
+        localStorage.setItem('bogen_progress', String(levels.length));
         this.show();
       });
     }
