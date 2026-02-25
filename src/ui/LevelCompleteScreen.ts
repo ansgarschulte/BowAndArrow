@@ -10,7 +10,9 @@ export class LevelCompleteScreen {
     this.container.className = 'overlay hidden';
 
     const style = document.createElement('style');
-    style.textContent = `
+    style.id = 'overlay-styles';
+    if (!document.getElementById('overlay-styles')) {
+      style.textContent = `
       .overlay {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0,0,0,0.7); display: flex;
@@ -43,7 +45,8 @@ export class LevelCompleteScreen {
         background: linear-gradient(135deg, #555, #444);
       }
     `;
-    document.head.appendChild(style);
+      document.head.appendChild(style);
+    }
     document.body.appendChild(this.container);
   }
 
@@ -93,6 +96,10 @@ export class LevelCompleteScreen {
 
   hide(): void {
     this.container.className = 'overlay hidden';
+  }
+
+  destroy(): void {
+    this.container.remove();
   }
 
   private saveProgress(maxLevel: number): void {

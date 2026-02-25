@@ -256,8 +256,8 @@ export class Game3D {
     this.targets.forEach(t => t.destroy());
     this.aimSystem.destroy();
     this.hud.destroy();
-    this.levelComplete.hide();
-    this.gameOver.hide();
+    this.levelComplete.destroy();
+    this.gameOver.destroy();
   }
 
   private spawnHitEffect(type: 'smoke' | 'water', pos: THREE.Vector3): void {

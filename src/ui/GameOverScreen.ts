@@ -53,4 +53,8 @@ export class GameOverScreen {
   hide(): void {
     this.container.className = 'overlay hidden';
   }
+
+  destroy(): void {
+    this.container.remove();
+  }
 }
