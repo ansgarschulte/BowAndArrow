@@ -53,7 +53,7 @@ export const CameraSettings = {
 export const GameSettings = {
   arrowSpeed: 50,
   gravity: 3.0,
-  windMax: 3,
+  windMax: 15,
   hitRadiusMultiplier: 2.2,
   minPower: 0.08,
   maxPower: 1.0,
