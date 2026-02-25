@@ -81,6 +81,7 @@ export interface BowConfig {
   glowColor?: number;
   hitEffect?: 'smoke' | 'water';
   multiShot?: number;
+  price: number; // 0 = free (classic)
 }
 
 export const BowTypes: Record<BowType, BowConfig> = {
@@ -92,6 +93,7 @@ export const BowTypes: Record<BowType, BowConfig> = {
     tipColor: 0x9e9e9e,
     trailColor: 0xffeb3b,
     particleColors: [],
+    price: 0,
   },
   fire: {
     name: 'Feuerbogen',
@@ -102,6 +104,7 @@ export const BowTypes: Record<BowType, BowConfig> = {
     trailColor: 0xff5722,
     particleColors: [0xff6d00, 0xff9100, 0xffab00, 0xff3d00],
     glowColor: 0xff6600,
+    price: 500,
   },
   ice: {
     name: 'Eisbogen',
@@ -112,6 +115,7 @@ export const BowTypes: Record<BowType, BowConfig> = {
     trailColor: 0x4dd0e1,
     particleColors: [0x80deea, 0xb2ebf2, 0xe0f7fa, 0x4dd0e1],
     glowColor: 0x00bcd4,
+    price: 500,
   },
   lightning: {
     name: 'Blitzbogen',
@@ -122,6 +126,7 @@ export const BowTypes: Record<BowType, BowConfig> = {
     trailColor: 0xffee58,
     particleColors: [0xffee58, 0xfff9c4, 0xfdd835, 0xffff00],
     glowColor: 0xffd600,
+    price: 800,
   },
   gold: {
     name: 'Goldbogen',
@@ -132,6 +137,7 @@ export const BowTypes: Record<BowType, BowConfig> = {
     trailColor: 0xffe082,
     particleColors: [0xffd700, 0xffe082, 0xffecb3, 0xffc107],
     glowColor: 0xffab00,
+    price: 1200,
   },
   triple: {
     name: 'Dreifachbogen',
@@ -142,6 +148,7 @@ export const BowTypes: Record<BowType, BowConfig> = {
     trailColor: 0xba68c8,
     particleColors: [0xce93d8, 0xba68c8, 0xab47bc, 0x8e24aa],
     glowColor: 0x9c27b0,
+    price: 1500,
   },
   smoke: {
     name: 'Rauchbogen',
@@ -153,6 +160,7 @@ export const BowTypes: Record<BowType, BowConfig> = {
     particleColors: [0x9e9e9e, 0xbdbdbd, 0x757575, 0x616161],
     glowColor: 0x9e9e9e,
     hitEffect: 'smoke' as const,
+    price: 1000,
   },
   air: {
     name: 'Luftbogen',
@@ -164,6 +172,7 @@ export const BowTypes: Record<BowType, BowConfig> = {
     particleColors: [0xb3e5fc, 0x81d4fa, 0x4fc3f7, 0xe1f5fe],
     glowColor: 0x29b6f6,
     multiShot: 3,
+    price: 2000,
   },
   water: {
     name: 'Wasserbogen',
@@ -175,6 +184,7 @@ export const BowTypes: Record<BowType, BowConfig> = {
     particleColors: [0x42a5f5, 0x64b5f6, 0x90caf9, 0x2196f3],
     glowColor: 0x1e88e5,
     hitEffect: 'water' as const,
+    price: 1000,
   },
 };
 
@@ -188,4 +198,49 @@ export function getSelectedBow(): BowType {
 
 export function setSelectedBow(bow: BowType): void {
   try { localStorage.setItem('bogen_bow_type', bow); } catch { /* noop */ }
+}
+
+// --- Coin wallet ---
+
+export function getCoins(): number {
+  try { return parseInt(localStorage.getItem('bogen_coins') || '0', 10); } catch { return 0; }
+}
+
+export function addCoins(amount: number): number {
+  const total = getCoins() + amount;
+  try { localStorage.setItem('bogen_coins', String(total)); } catch { /* noop */ }
+  return total;
+}
+
+export function spendCoins(amount: number): boolean {
+  const current = getCoins();
+  if (current < amount) return false;
+  try { localStorage.setItem('bogen_coins', String(current - amount)); } catch { /* noop */ }
+  return true;
+}
+
+// --- Owned bows ---
+
+export function getOwnedBows(): Set<BowType> {
+  try {
+    const saved = localStorage.getItem('bogen_owned_bows');
+    if (saved) {
+      const arr = JSON.parse(saved) as string[];
+      const set = new Set<BowType>(arr.filter(k => k in BowTypes) as BowType[]);
+      set.add('classic');
+      return set;
+    }
+  } catch { /* noop */ }
+  return new Set<BowType>(['classic']);
+}
+
+export function buyBow(bow: BowType): boolean {
+  const config = BowTypes[bow];
+  if (!config) return false;
+  const owned = getOwnedBows();
+  if (owned.has(bow)) return true; // already owned
+  if (!spendCoins(config.price)) return false;
+  owned.add(bow);
+  try { localStorage.setItem('bogen_owned_bows', JSON.stringify([...owned])); } catch { /* noop */ }
+  return true;
 }

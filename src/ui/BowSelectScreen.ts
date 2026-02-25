@@ -1,4 +1,4 @@
-import { BowType, BowTypes, getSelectedBow, setSelectedBow } from '../config/gameConfig';
+import { BowType, BowTypes, getSelectedBow, setSelectedBow, getCoins, getOwnedBows, buyBow } from '../config/gameConfig';
 
 export class BowSelectScreen {
   private container: HTMLDivElement;
@@ -23,16 +23,20 @@ export class BowSelectScreen {
         background: #1a1a2e; border-radius: 20px;
         padding: 32px 28px; text-align: center;
         border: 3px solid #ffd700;
-        max-width: 320px; width: 90%;
+        max-width: 340px; width: 90%;
+      }
+      .bow-coins {
+        color: #ffd700; font-size: 20px; font-weight: bold;
+        margin: 0 0 14px 0;
       }
       .bow-grid {
-        display: grid; grid-template-columns: 1fr; gap: 12px;
-        max-height: 60vh; overflow-y: auto; width: 100%;
+        display: grid; grid-template-columns: 1fr; gap: 10px;
+        max-height: 55vh; overflow-y: auto; width: 100%;
         padding: 4px; -webkit-overflow-scrolling: touch;
       }
       .bow-card {
-        display: flex; align-items: center; gap: 14px;
-        padding: 14px 16px; border-radius: 14px;
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 14px; border-radius: 14px;
         background: rgba(255,255,255,0.08);
         border: 2px solid transparent;
         cursor: pointer; transition: transform 0.1s;
@@ -44,11 +48,20 @@ export class BowSelectScreen {
         border-color: #ffd700;
         background: rgba(255,215,0,0.15);
       }
-      .bow-card .bow-emoji { font-size: 36px; flex-shrink: 0; }
-      .bow-card .bow-info { text-align: left; }
-      .bow-card .bow-name {
-        color: #fff; font-size: 18px; font-weight: bold;
+      .bow-card.locked {
+        opacity: 0.6;
       }
+      .bow-card .bow-emoji { font-size: 32px; flex-shrink: 0; }
+      .bow-card .bow-info { text-align: left; flex: 1; }
+      .bow-card .bow-name {
+        color: #fff; font-size: 16px; font-weight: bold;
+      }
+      .bow-card .bow-price {
+        font-size: 13px; margin-top: 2px;
+      }
+      .bow-card .bow-price.owned { color: #4caf50; }
+      .bow-card .bow-price.affordable { color: #ffd700; }
+      .bow-card .bow-price.expensive { color: #e94560; }
       .bow-card .bow-selected-badge {
         color: #ffd700; font-size: 13px; margin-top: 2px;
       }
@@ -71,25 +84,42 @@ export class BowSelectScreen {
   show(): void {
     const current = getSelectedBow();
     const bowKeys = Object.keys(BowTypes) as BowType[];
+    const coins = getCoins();
+    const owned = getOwnedBows();
 
     this.container.className = 'overlay';
     this.container.innerHTML = `
-      <div class="overlay-panel" style="max-width: 340px;">
-        <h2 style="color: #ffd700; font-size: 24px; margin: 0 0 16px 0;">🏹 Bogen wählen</h2>
+      <div class="overlay-panel">
+        <h2 style="color: #ffd700; font-size: 22px; margin: 0 0 8px 0;">🏹 Bogen-Shop</h2>
+        <div class="bow-coins">🪙 ${coins}</div>
         <div class="bow-grid">
           ${bowKeys.map(key => {
             const bow = BowTypes[key];
+            const isOwned = owned.has(key);
             const selected = key === current;
-            return `<div class="bow-card ${selected ? 'selected' : ''}" data-bow="${key}">
+            const canAfford = coins >= bow.price;
+
+            let priceHtml: string;
+            if (isOwned && selected) {
+              priceHtml = '<div class="bow-selected-badge">✓ Ausgewählt</div>';
+            } else if (isOwned) {
+              priceHtml = '<div class="bow-price owned">✓ Gekauft</div>';
+            } else if (canAfford) {
+              priceHtml = `<div class="bow-price affordable">🪙 ${bow.price} — Kaufen!</div>`;
+            } else {
+              priceHtml = `<div class="bow-price expensive">🔒 ${bow.price} 🪙</div>`;
+            }
+
+            return `<div class="bow-card ${selected ? 'selected' : ''} ${!isOwned ? 'locked' : ''}" data-bow="${key}">
               <div class="bow-emoji">${bow.emoji}</div>
               <div class="bow-info">
                 <div class="bow-name">${bow.name}</div>
-                ${selected ? '<div class="bow-selected-badge">✓ Ausgewählt</div>' : ''}
+                ${priceHtml}
               </div>
             </div>`;
           }).join('')}
         </div>
-        <button class="overlay-btn secondary" id="bow-back" style="margin-top: 16px;">← Zurück</button>
+        <button class="overlay-btn secondary" id="bow-back" style="margin-top: 14px;">← Zurück</button>
       </div>
     `;
 
@@ -97,8 +127,19 @@ export class BowSelectScreen {
       card.addEventListener('click', (e: Event) => {
         e.stopPropagation();
         const bow = (card as HTMLElement).dataset.bow as BowType;
-        setSelectedBow(bow);
-        this.show();
+        const isOwned = owned.has(bow);
+
+        if (isOwned) {
+          setSelectedBow(bow);
+          this.show();
+        } else {
+          if (buyBow(bow)) {
+            setSelectedBow(bow);
+            this.show();
+          }
+          // If can't afford, just refresh to show same state
+          this.show();
+        }
       });
     });
 

@@ -1,4 +1,4 @@
-import { getSelectedBow, BowTypes } from '../config/gameConfig';
+import { getSelectedBow, BowTypes, getCoins } from '../config/gameConfig';
 import { BowSelectScreen } from './BowSelectScreen';
 import { levels } from '../levels/levelConfig';
 
@@ -93,6 +93,7 @@ export class MenuScreen {
       <div class="menu-emoji">🏹</div>
       <div class="menu-title">Ziel Scheiben<br>Schiessen</div>
       <div class="menu-subtitle">Leicht Gemacht</div>
+      <div style="color:#ffd700; font-size:18px; font-weight:bold; margin-bottom:8px;">🪙 ${getCoins()}</div>
       <div class="level-grid">
         ${Array.from({ length: levels.length }, (_, i) => {
           const level = i + 1;
@@ -104,7 +105,7 @@ export class MenuScreen {
         }).join('')}
       </div>
       <button class="bow-select-btn" id="btn-bow-select">
-        ${BowTypes[getSelectedBow()].emoji} ${BowTypes[getSelectedBow()].name}
+        🛒 Bogen-Shop (${BowTypes[getSelectedBow()].emoji} ${BowTypes[getSelectedBow()].name})
       </button>
       <button class="cheat-btn" id="cheat-unlock" title="Alle Level freischalten">🔓</button>
     `;

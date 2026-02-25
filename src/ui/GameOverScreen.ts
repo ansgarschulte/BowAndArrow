@@ -1,3 +1,5 @@
+import { addCoins } from '../config/gameConfig';
+
 export class GameOverScreen {
   private container: HTMLDivElement;
 
@@ -16,12 +18,16 @@ export class GameOverScreen {
     onRetry: () => void;
     onMenu: () => void;
   }): void {
+    // Earn half points even on failure
+    const earned = Math.floor(data.score * 0.5);
+    const newTotal = earned > 0 ? addCoins(earned) : 0;
+
     this.container.className = 'overlay';
     this.container.innerHTML = `
       <div class="overlay-panel" style="border-color: #e94560;">
         <h2 style="color: #e94560;">💔 Pfeile alle!</h2>
         <div class="stats">Treffer: ${data.hits}/${data.totalTargets}</div>
-        <div class="stats gold">Punkte: ${data.score}</div>
+        ${earned > 0 ? `<div class="stats gold">+${earned} 🪙 (halbe Punkte)</div>` : ''}
         <button class="overlay-btn" id="btn-retry">🔄 Nochmal</button>
         <button class="overlay-btn secondary" id="btn-menu-go">🏠 Menü</button>
       </div>

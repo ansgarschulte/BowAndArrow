@@ -1,4 +1,5 @@
 import { levels } from '../levels/levelConfig';
+import { addCoins } from '../config/gameConfig';
 
 export class LevelCompleteScreen {
   private container: HTMLDivElement;
@@ -58,6 +59,7 @@ export class LevelCompleteScreen {
     const starStr = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
 
     this.saveProgress(data.level + 1);
+    const newTotal = addCoins(data.score);
 
     this.container.className = 'overlay';
     this.container.innerHTML = `
@@ -65,7 +67,8 @@ export class LevelCompleteScreen {
         <h2>🎉 Level geschafft!</h2>
         <div class="stars">${starStr}</div>
         <div class="stats">Treffer: ${data.hits}/${data.totalTargets}</div>
-        <div class="stats gold">Punkte: ${data.score}</div>
+        <div class="stats gold">+${data.score} 🪙</div>
+        <div class="stats" style="font-size:15px; color:#aaa;">Gesamt: ${newTotal} 🪙</div>
         ${data.level < levels.length ? '<button class="overlay-btn" id="btn-next">Nächstes Level ▶</button>' : ''}
         <button class="overlay-btn secondary" id="btn-menu">🏠 Menü</button>
       </div>
