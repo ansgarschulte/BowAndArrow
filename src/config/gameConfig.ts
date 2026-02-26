@@ -271,6 +271,14 @@ export function saveLevelHighscore(level: number, score: number): boolean {
   return false;
 }
 
+export function getTotalHighscore(levelCount: number): number {
+  let total = 0;
+  for (let i = 1; i <= levelCount; i++) {
+    total += getLevelHighscore(i);
+  }
+  return total;
+}
+
 // --- Daily Login Bonus ---
 
 export function checkDailyLoginBonus(): { coins: number; streak: number } | null {

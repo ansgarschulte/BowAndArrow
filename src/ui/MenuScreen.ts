@@ -1,4 +1,4 @@
-import { getSelectedBow, BowTypes, getCoins, getLevelStars, checkDailyLoginBonus, getDailyChallengeLevel, hasDailyChallengeBeenPlayed } from '../config/gameConfig';
+import { getSelectedBow, BowTypes, getCoins, getLevelStars, getTotalHighscore, checkDailyLoginBonus, getDailyChallengeLevel, hasDailyChallengeBeenPlayed } from '../config/gameConfig';
 import { BowSelectScreen } from './BowSelectScreen';
 import { levels } from '../levels/levelConfig';
 import { Sound } from '../systems/SoundManager';
@@ -117,7 +117,8 @@ export class MenuScreen {
       <div class="menu-emoji">🏹</div>
       <div class="menu-title">Ziel Scheiben<br>Schiessen</div>
       <div class="menu-subtitle">Leicht Gemacht</div>
-      <div style="color:#ffd700; font-size:18px; font-weight:bold; margin-bottom:8px;">🪙 ${getCoins()}</div>
+      <div style="color:#ffd700; font-size:18px; font-weight:bold; margin-bottom:4px;">🪙 ${getCoins()}</div>
+      <div style="color:#ff8800; font-size:15px; font-weight:bold; margin-bottom:8px;">🏆 Highscore: ${getTotalHighscore(levels.length)}</div>
       <button class="daily-btn ${dailyPlayed ? 'played' : ''}" id="btn-daily" ${dailyPlayed ? 'disabled' : ''}>
         ${dailyPlayed ? '✅ Daily erledigt' : `⚡ Daily Challenge (Lvl ${dailyLevel})`}
       </button>
