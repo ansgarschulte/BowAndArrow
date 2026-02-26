@@ -259,16 +259,40 @@ export function saveLevelStars(level: number, stars: number): void {
 }
 
 export function getLevelHighscore(level: number): number {
-  try { return parseInt(localStorage.getItem(`bogen_high_${level}`) || '0', 10); } catch { return 0; }
+  try {
+    const raw = localStorage.getItem(`bogen_high_${level}`);
+    if (!raw) return 0;
+    // Support both old (plain number) and new ({score,name}) format
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'object' ? parsed.score : parsed;
+  } catch { return 0; }
 }
 
-export function saveLevelHighscore(level: number, score: number): boolean {
+export function getLevelHighscoreName(level: number): string {
+  try {
+    const raw = localStorage.getItem(`bogen_high_${level}`);
+    if (!raw) return '';
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'object' ? (parsed.name || '') : '';
+  } catch { return ''; }
+}
+
+export function saveLevelHighscore(level: number, score: number, name?: string): boolean {
   const current = getLevelHighscore(level);
   if (score > current) {
-    try { localStorage.setItem(`bogen_high_${level}`, String(score)); } catch { /* noop */ }
+    try {
+      localStorage.setItem(`bogen_high_${level}`, JSON.stringify({ score, name: name || '' }));
+    } catch { /* noop */ }
     return true; // new record
   }
   return false;
+}
+
+export function updateHighscoreName(level: number, name: string): void {
+  try {
+    const score = getLevelHighscore(level);
+    localStorage.setItem(`bogen_high_${level}`, JSON.stringify({ score, name }));
+  } catch { /* noop */ }
 }
 
 export function getTotalHighscore(levelCount: number): number {

@@ -69,7 +69,12 @@ export class Game3D {
 
     // HUD
     this.hud = new HUD3D();
-    this.hud.init(level, levelConfig.wind);
+    this.hud.init(level, levelConfig.wind, () => {
+      if (!this.finished) {
+        this.finished = true;
+        this.engine.showMenu();
+      }
+    });
 
     // Overlays
     this.levelComplete = new LevelCompleteScreen();

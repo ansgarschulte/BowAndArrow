@@ -8,6 +8,7 @@ export class HUD3D {
   private powerBar: HTMLDivElement;
   private powerFill: HTMLDivElement;
   private introEl: HTMLDivElement;
+  private exitBtn: HTMLButtonElement;
 
   constructor() {
     this.container = document.createElement('div');
@@ -17,6 +18,7 @@ export class HUD3D {
         <span class="hud-score" id="hud-score">🏆 0</span>
         <span class="hud-level" id="hud-level">Level 1</span>
         <span class="hud-arrows" id="hud-arrows">🏹 8</span>
+        <button class="hud-exit" id="hud-exit" title="Level verlassen">✕</button>
       </div>
       <div class="hud-second">
         <span class="hud-wind" id="hud-wind"></span>
@@ -48,6 +50,18 @@ export class HUD3D {
       }
       .hud-level { font-size: 18px; }
       .hud-hits, .hud-wind { font-size: 14px; }
+      .hud-exit {
+        pointer-events: auto;
+        width: 36px; height: 36px;
+        background: rgba(0,0,0,0.55); border: 2px solid rgba(255,255,255,0.4);
+        border-radius: 50%; color: #fff; font-size: 18px; font-weight: bold;
+        cursor: pointer; touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        display: flex; align-items: center; justify-content: center;
+        padding: 0; line-height: 1;
+        transition: background 0.15s, transform 0.1s;
+      }
+      .hud-exit:active { background: rgba(200,0,0,0.7); transform: scale(0.9); }
       .hud-power {
         position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
         width: 140px; height: 14px; background: rgba(0,0,0,0.5);
@@ -83,9 +97,10 @@ export class HUD3D {
     this.powerBar = document.getElementById('hud-power') as HTMLDivElement;
     this.powerFill = document.getElementById('hud-power-fill') as HTMLDivElement;
     this.introEl = document.getElementById('hud-intro') as HTMLDivElement;
+    this.exitBtn = document.getElementById('hud-exit') as HTMLButtonElement;
   }
 
-  init(level: number, wind: number): void {
+  init(level: number, wind: number, onExit?: () => void): void {
     this.levelEl.textContent = `Level ${level}`;
     if (wind !== 0) {
       const dir = wind > 0 ? '→' : '←';
@@ -93,6 +108,12 @@ export class HUD3D {
       this.windEl.textContent = `${strength} ${dir}`;
     } else {
       this.windEl.textContent = '';
+    }
+    if (onExit) {
+      this.exitBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onExit();
+      });
     }
     this.container.style.display = '';
   }

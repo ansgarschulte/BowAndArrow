@@ -1,5 +1,5 @@
 import { levels } from '../levels/levelConfig';
-import { addCoins, saveLevelStars, saveLevelHighscore, getLevelHighscore, getDailyChallengeLevel, hasDailyChallengeBeenPlayed, markDailyChallengeComplete } from '../config/gameConfig';
+import { addCoins, saveLevelStars, saveLevelHighscore, getLevelHighscore, getLevelHighscoreName, updateHighscoreName, getDailyChallengeLevel, hasDailyChallengeBeenPlayed, markDailyChallengeComplete } from '../config/gameConfig';
 import { Sound } from '../systems/SoundManager';
 
 export class LevelCompleteScreen {
@@ -72,6 +72,7 @@ export class LevelCompleteScreen {
     saveLevelStars(data.level, stars);
     const isNewRecord = saveLevelHighscore(data.level, data.score);
     const oldHigh = getLevelHighscore(data.level);
+    const oldHighName = getLevelHighscoreName(data.level);
 
     // Check daily challenge
     const dailyLevel = getDailyChallengeLevel();
@@ -91,12 +92,35 @@ export class LevelCompleteScreen {
         <div class="stats">Treffer: ${data.hits}/${data.totalTargets}</div>
         <div class="stats gold">+${data.score} 🪙${data.combo > 1 ? ` (Max Combo x${data.combo})` : ''}</div>
         ${isDailyChallenge ? `<div class="stats" style="color:#ff8800; font-size:18px;">⚡ Daily Bonus: +${dailyBonus} 🪙</div>` : ''}
-        ${isNewRecord ? '<div class="stats" style="color:#ff4444; font-size:22px; animation: pulse 0.5s infinite alternate;">🎊 Neuer Rekord! 🎊</div>' : `<div class="stats" style="font-size:14px; color:#888;">Rekord: ${oldHigh}</div>`}
+        ${isNewRecord ? `
+          <div class="stats" style="color:#ff4444; font-size:22px; animation: pulse 0.5s infinite alternate;">🎊 Neuer Rekord! 🎊</div>
+          <div style="margin:10px 0 4px; display:flex; gap:6px; justify-content:center; align-items:center;">
+            <input id="hs-name-input" type="text" maxlength="12" placeholder="Dein Name"
+              style="padding:8px 10px; border-radius:10px; border:2px solid #ffd700; background:#111;
+                     color:#fff; font-size:16px; width:140px; text-align:center;
+                     -webkit-tap-highlight-color:transparent; outline:none;" />
+            <button id="hs-name-save" style="padding:8px 14px; border-radius:10px; border:none;
+              background:#ffd700; color:#000; font-weight:bold; font-size:16px; cursor:pointer;
+              touch-action:manipulation;">✓</button>
+          </div>` 
+        : `<div class="stats" style="font-size:14px; color:#888;">Rekord: ${oldHigh}${oldHighName ? ` (${oldHighName})` : ''}</div>`}
         <div class="stats" style="font-size:15px; color:#aaa;">Gesamt: ${newTotal + dailyBonus} 🪙</div>
         ${data.level < levels.length ? '<button class="overlay-btn" id="btn-next">Nächstes Level ▶</button>' : ''}
         <button class="overlay-btn secondary" id="btn-menu">🏠 Menü</button>
       </div>
     `;
+
+    // Name entry for new record
+    if (isNewRecord) {
+      const nameInput = document.getElementById('hs-name-input') as HTMLInputElement | null;
+      const nameSaveBtn = document.getElementById('hs-name-save') as HTMLButtonElement | null;
+      const saveName = () => {
+        const name = nameInput?.value.trim() || '';
+        if (name) updateHighscoreName(data.level, name);
+      };
+      nameSaveBtn?.addEventListener('click', saveName);
+      nameInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveName(); });
+    }
 
     const addButtonHandler = (id: string, handler: () => void) => {
       const btn = document.getElementById(id);
