@@ -275,8 +275,8 @@ export class Target3D {
 
     if (this.config.movement) {
       const { pattern, speed, range } = this.config.movement;
-      const t = this.elapsed * speed * 0.05;
-      const r = range * 0.1; // scale range to 3D units
+      const t = this.elapsed * speed * 0.03; // slower base movement
+      const r = range * 0.08; // tighter movement range
 
       switch (pattern) {
         case 'horizontal':

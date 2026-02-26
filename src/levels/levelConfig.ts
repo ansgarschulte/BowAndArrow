@@ -126,7 +126,7 @@ export const levels: LevelConfig[] = [
       { x: 0, y: 3.5, z: 38, scale: 0.7, type: 'bonus', movement: { pattern: 'circle', speed: 25, range: 20 } },
     ],
     wind: 0.15,
-    arrowCount: 14,
+    arrowCount: 18,
   },
   // Level 7: Enten-Jagd
   {
@@ -155,9 +155,9 @@ export const levels: LevelConfig[] = [
       },
     ],
     wind: 0,
-    arrowCount: 12,
+    arrowCount: 16,
   },
-  // Level 8: Wind-Sturm (replaces Ring-Tanz)
+  // Level 8: Wind-Sturm
   {
     name: 'Wind-Sturm',
     subtitle: 'Starker Wind! 🌪️',

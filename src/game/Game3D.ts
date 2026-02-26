@@ -33,6 +33,7 @@ export class Game3D {
   private lastAssistedDir: THREE.Vector3 | null = null;
   private timeScale: number = 1;
   private bulletTimeActive: boolean = false;
+  private onKeyDown: ((e: KeyboardEvent) => void) | null = null;
 
   constructor(engine: Engine3D, level: number) {
     this.engine = engine;
@@ -73,6 +74,15 @@ export class Game3D {
     // Overlays
     this.levelComplete = new LevelCompleteScreen();
     this.gameOver = new GameOverScreen();
+
+    // ESC to exit level
+    this.onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !this.finished) {
+        this.finished = true;
+        this.engine.showMenu();
+      }
+    };
+    window.addEventListener('keydown', this.onKeyDown);
 
     // Level intro
     this.hud.showLevelIntro(levelConfig.name, levelConfig.subtitle);
@@ -287,6 +297,7 @@ export class Game3D {
   }
 
   destroy(): void {
+    if (this.onKeyDown) window.removeEventListener('keydown', this.onKeyDown);
     this.inputManager.destroy();
     this.environment.destroy();
     this.archer.destroy();

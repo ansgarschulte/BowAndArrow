@@ -54,7 +54,7 @@ export const GameSettings = {
   arrowSpeed: 50,
   gravity: 3.0,
   windMax: 15,
-  hitRadiusMultiplier: 2.2,
+  hitRadiusMultiplier: 2.5,
   minPower: 0.08,
   maxPower: 1.0,
   powerChargeSpeed: 1.2,
@@ -62,8 +62,8 @@ export const GameSettings = {
   maxAimAngleH: Math.PI / 4,
   maxAimAngleV: Math.PI / 6,
   archerHeight: 1.7,
-  aimAssistRadius: 8,
-  aimAssistStrength: 0.35,
+  aimAssistRadius: 10,
+  aimAssistStrength: 0.45,
 };
 
 // --- Bow types ---
