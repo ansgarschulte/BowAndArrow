@@ -119,12 +119,15 @@ export class HUD3D {
     }, 2000);
   }
 
-  showHitPoints(points: number): void {
+  showHitPoints(points: number, combo: number): void {
     const el = document.createElement('div');
-    el.textContent = `+${points}`;
+    const comboText = combo > 1 ? ` COMBO x${combo}! 🔥` : '';
+    const prefix = points >= 0 ? '+' : '';
+    el.textContent = `${prefix}${points}${comboText}`;
     el.style.cssText = `
       position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
-      font-size: 28px; font-weight: bold; color: #ffd700;
+      font-size: ${combo > 1 ? 34 : 28}px; font-weight: bold;
+      color: ${points < 0 ? '#ff0000' : combo >= 4 ? '#ff4444' : combo >= 2 ? '#ff9800' : '#ffd700'};
       text-shadow: 0 2px 6px rgba(0,0,0,0.8);
       pointer-events: none; z-index: 15;
       animation: hitFloat 0.8s ease-out forwards;

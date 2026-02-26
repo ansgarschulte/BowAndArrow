@@ -3,7 +3,7 @@ export interface TargetConfig {
   y: number;
   z: number;
   scale: number;
-  type: 'static' | 'moving' | 'duck' | 'emoji';
+  type: 'static' | 'moving' | 'duck' | 'emoji' | 'bonus' | 'bomb';
   emojiIndex?: number;
   movement?: {
     pattern: 'horizontal' | 'vertical' | 'sine' | 'circle';
@@ -122,6 +122,8 @@ export const levels: LevelConfig[] = [
         x: 2, y: 2, z: 33, scale: 1.0, type: 'moving',
         movement: { pattern: 'sine', speed: 32, range: 40 },
       },
+      // Bonus target for extra points
+      { x: 0, y: 3.5, z: 38, scale: 0.7, type: 'bonus', movement: { pattern: 'circle', speed: 25, range: 20 } },
     ],
     wind: 0.15,
     arrowCount: 14,
@@ -171,6 +173,10 @@ export const levels: LevelConfig[] = [
         movement: { pattern: 'vertical', speed: 18, range: 20 },
       },
       { x: 2, y: 2, z: 33, scale: 1.05, type: 'static' },
+      // Bonus: hard to hit, worth 3x
+      { x: 0, y: 4, z: 40, scale: 0.6, type: 'bonus', movement: { pattern: 'sine', speed: 30, range: 25 } },
+      // Bomb: avoid hitting this!
+      { x: -2, y: 1.5, z: 31, scale: 1.0, type: 'bomb' },
     ],
     wind: 0.6,
     arrowCount: 14,
@@ -319,6 +325,9 @@ export const levels: LevelConfig[] = [
         x: 2, y: 2.5, z: 32, scale: 1.0, type: 'moving',
         movement: { pattern: 'circle', speed: 25, range: 38 },
       },
+      // Bonus and bomb mixed in
+      { x: 0, y: 4, z: 30, scale: 0.5, type: 'bonus', movement: { pattern: 'circle', speed: 40, range: 20 } },
+      { x: 1, y: 1.5, z: 29, scale: 0.9, type: 'bomb', movement: { pattern: 'circle', speed: 20, range: 25 } },
     ],
     wind: 0.25,
     arrowCount: 14,

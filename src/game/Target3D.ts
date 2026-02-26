@@ -6,7 +6,7 @@ export interface Target3DConfig {
   y: number;
   z: number;
   scale: number;
-  type: 'static' | 'moving' | 'duck' | 'emoji';
+  type: 'static' | 'moving' | 'duck' | 'emoji' | 'bonus' | 'bomb';
   emojiIndex?: number;
   movement?: {
     pattern: 'horizontal' | 'vertical' | 'sine' | 'circle';
@@ -37,6 +37,10 @@ export class Target3D {
       this.createDuck();
     } else if (config.type === 'emoji') {
       this.createEmoji(config.emojiIndex || 0);
+    } else if (config.type === 'bonus') {
+      this.createBonusTarget();
+    } else if (config.type === 'bomb') {
+      this.createBombTarget();
     } else {
       this.createTarget();
     }
@@ -183,6 +187,87 @@ export class Target3D {
     this.mesh.add(plane);
   }
 
+  private createBonusTarget(): void {
+    const s = this.config.scale;
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    const cx = size / 2;
+
+    // Golden star
+    ctx.fillStyle = '#ffd700';
+    ctx.shadowColor = '#ff8c00';
+    ctx.shadowBlur = 20;
+    this.drawStar(ctx, cx, cx, 5, size * 0.4, size * 0.2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.font = 'bold 48px sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('3×', cx, cx);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(s * 1.2, s * 1.2, 1);
+    this.mesh.add(sprite);
+  }
+
+  private createBombTarget(): void {
+    const s = this.config.scale;
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    const cx = size / 2;
+
+    // Black bomb circle
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.arc(cx, cx + 20, size * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    // Fuse
+    ctx.strokeStyle = '#8b4513';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(cx, cx - size * 0.3);
+    ctx.quadraticCurveTo(cx + 30, cx - size * 0.45, cx + 20, cx - size * 0.5);
+    ctx.stroke();
+    // Spark
+    ctx.fillStyle = '#ff4444';
+    ctx.beginPath();
+    ctx.arc(cx + 20, cx - size * 0.5, 12, 0, Math.PI * 2);
+    ctx.fill();
+    // Skull emoji
+    ctx.font = '72px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('💣', cx, cx + 20);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(s * 1.2, s * 1.2, 1);
+    this.mesh.add(sprite);
+  }
+
+  private drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, spikes: number, outerR: number, innerR: number): void {
+    ctx.beginPath();
+    for (let i = 0; i < spikes * 2; i++) {
+      const r = i % 2 === 0 ? outerR : innerR;
+      const angle = (Math.PI * i) / spikes - Math.PI / 2;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  }
+
   update(delta: number): void {
     if (this.hit) return;
 
@@ -228,6 +313,11 @@ export class Target3D {
     }
     return { hit: false, distance: dist };
   }
+
+  getType(): string { return this.config.type; }
+  isBonus(): boolean { return this.config.type === 'bonus'; }
+  isBomb(): boolean { return this.config.type === 'bomb'; }
+  isRequired(): boolean { return this.config.type !== 'bonus' && this.config.type !== 'bomb'; }
 
   onHit(bowType: BowType = 'classic'): void {
     this.hit = true;

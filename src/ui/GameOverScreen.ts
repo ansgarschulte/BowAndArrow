@@ -1,4 +1,5 @@
 import { addCoins } from '../config/gameConfig';
+import { Sound } from '../systems/SoundManager';
 
 export class GameOverScreen {
   private container: HTMLDivElement;
@@ -46,8 +47,8 @@ export class GameOverScreen {
       btn.addEventListener('click', action);
     };
 
-    addButtonHandler('btn-retry', () => { this.hide(); data.onRetry(); });
-    addButtonHandler('btn-menu-go', () => { this.hide(); data.onMenu(); });
+    addButtonHandler('btn-retry', () => { Sound.click(); this.hide(); data.onRetry(); });
+    addButtonHandler('btn-menu-go', () => { Sound.click(); this.hide(); data.onMenu(); });
   }
 
   hide(): void {

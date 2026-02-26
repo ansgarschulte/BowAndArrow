@@ -1,5 +1,6 @@
 import { levels } from '../levels/levelConfig';
-import { addCoins } from '../config/gameConfig';
+import { addCoins, saveLevelStars, saveLevelHighscore, getLevelHighscore, getDailyChallengeLevel, hasDailyChallengeBeenPlayed, markDailyChallengeComplete } from '../config/gameConfig';
+import { Sound } from '../systems/SoundManager';
 
 export class LevelCompleteScreen {
   private container: HTMLDivElement;
@@ -44,6 +45,10 @@ export class LevelCompleteScreen {
       .overlay-btn.secondary {
         background: linear-gradient(135deg, #555, #444);
       }
+      @keyframes pulse {
+        from { transform: scale(1); }
+        to { transform: scale(1.08); }
+      }
     `;
       document.head.appendChild(style);
     }
@@ -55,6 +60,7 @@ export class LevelCompleteScreen {
     score: number;
     hits: number;
     totalTargets: number;
+    combo: number;
     onNext: () => void;
     onMenu: () => void;
   }): void {
@@ -63,6 +69,19 @@ export class LevelCompleteScreen {
 
     this.saveProgress(data.level + 1);
     const newTotal = addCoins(data.score);
+    saveLevelStars(data.level, stars);
+    const isNewRecord = saveLevelHighscore(data.level, data.score);
+    const oldHigh = getLevelHighscore(data.level);
+
+    // Check daily challenge
+    const dailyLevel = getDailyChallengeLevel();
+    const isDailyChallenge = data.level === dailyLevel && !hasDailyChallengeBeenPlayed();
+    let dailyBonus = 0;
+    if (isDailyChallenge) {
+      dailyBonus = markDailyChallengeComplete(data.score);
+    }
+
+    if (isNewRecord) Sound.newRecord();
 
     this.container.className = 'overlay';
     this.container.innerHTML = `
@@ -70,8 +89,10 @@ export class LevelCompleteScreen {
         <h2>🎉 Level geschafft!</h2>
         <div class="stars">${starStr}</div>
         <div class="stats">Treffer: ${data.hits}/${data.totalTargets}</div>
-        <div class="stats gold">+${data.score} 🪙</div>
-        <div class="stats" style="font-size:15px; color:#aaa;">Gesamt: ${newTotal} 🪙</div>
+        <div class="stats gold">+${data.score} 🪙${data.combo > 1 ? ` (Max Combo x${data.combo})` : ''}</div>
+        ${isDailyChallenge ? `<div class="stats" style="color:#ff8800; font-size:18px;">⚡ Daily Bonus: +${dailyBonus} 🪙</div>` : ''}
+        ${isNewRecord ? '<div class="stats" style="color:#ff4444; font-size:22px; animation: pulse 0.5s infinite alternate;">🎊 Neuer Rekord! 🎊</div>' : `<div class="stats" style="font-size:14px; color:#888;">Rekord: ${oldHigh}</div>`}
+        <div class="stats" style="font-size:15px; color:#aaa;">Gesamt: ${newTotal + dailyBonus} 🪙</div>
         ${data.level < levels.length ? '<button class="overlay-btn" id="btn-next">Nächstes Level ▶</button>' : ''}
         <button class="overlay-btn secondary" id="btn-menu">🏠 Menü</button>
       </div>
@@ -90,8 +111,8 @@ export class LevelCompleteScreen {
       btn.addEventListener('click', action);
     };
 
-    addButtonHandler('btn-next', () => { this.hide(); data.onNext(); });
-    addButtonHandler('btn-menu', () => { this.hide(); data.onMenu(); });
+    addButtonHandler('btn-next', () => { Sound.click(); this.hide(); data.onNext(); });
+    addButtonHandler('btn-menu', () => { Sound.click(); this.hide(); data.onMenu(); });
   }
 
   hide(): void {

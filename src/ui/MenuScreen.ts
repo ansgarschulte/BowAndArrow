@@ -1,6 +1,7 @@
-import { getSelectedBow, BowTypes, getCoins } from '../config/gameConfig';
+import { getSelectedBow, BowTypes, getCoins, getLevelStars, checkDailyLoginBonus, getDailyChallengeLevel, hasDailyChallengeBeenPlayed } from '../config/gameConfig';
 import { BowSelectScreen } from './BowSelectScreen';
 import { levels } from '../levels/levelConfig';
+import { Sound } from '../systems/SoundManager';
 
 export class MenuScreen {
   private container: HTMLDivElement;
@@ -62,6 +63,9 @@ export class MenuScreen {
       .level-btn .lock-icon {
         font-size: 12px; display: block; margin-top: 2px;
       }
+      .level-stars {
+        font-size: 10px; color: #ffd700; line-height: 1; margin-top: 2px;
+      }
       .cheat-btn {
         position: absolute; top: 16px; right: 16px;
         background: none; border: none; font-size: 24px;
@@ -81,6 +85,23 @@ export class MenuScreen {
         transition: transform 0.1s;
       }
       .bow-select-btn:active { transform: scale(0.95); }
+      .daily-btn {
+        width: 80%; max-width: 300px; padding: 10px; margin-bottom: 10px;
+        border: 2px solid #ff4444; border-radius: 14px;
+        background: linear-gradient(135deg, rgba(255,68,68,0.2), rgba(255,136,0,0.2));
+        color: #ff8800; font-size: 16px; font-weight: bold;
+        cursor: pointer; touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        animation: pulse 1.5s ease-in-out infinite alternate;
+      }
+      .daily-btn.played {
+        border-color: #555; background: rgba(50,50,50,0.3);
+        color: #888; animation: none;
+      }
+      @keyframes pulse {
+        from { transform: scale(1); }
+        to { transform: scale(1.03); }
+      }
     `;
     document.head.appendChild(style);
     document.body.appendChild(this.container);
@@ -88,19 +109,27 @@ export class MenuScreen {
 
   show(): void {
     const maxLevel = this.loadProgress();
+    const dailyLevel = getDailyChallengeLevel();
+    const dailyPlayed = hasDailyChallengeBeenPlayed();
+
     this.container.className = '';
     this.container.innerHTML = `
       <div class="menu-emoji">🏹</div>
       <div class="menu-title">Ziel Scheiben<br>Schiessen</div>
       <div class="menu-subtitle">Leicht Gemacht</div>
       <div style="color:#ffd700; font-size:18px; font-weight:bold; margin-bottom:8px;">🪙 ${getCoins()}</div>
+      <button class="daily-btn ${dailyPlayed ? 'played' : ''}" id="btn-daily" ${dailyPlayed ? 'disabled' : ''}>
+        ${dailyPlayed ? '✅ Daily erledigt' : `⚡ Daily Challenge (Lvl ${dailyLevel})`}
+      </button>
       <div class="level-grid">
         ${Array.from({ length: levels.length }, (_, i) => {
           const level = i + 1;
           const unlocked = level <= maxLevel;
+          const stars = getLevelStars(level);
+          const starStr = unlocked && stars > 0 ? '<div class="level-stars">' + '★'.repeat(stars) + '☆'.repeat(3 - stars) + '</div>' : '';
           return `<button class="level-btn ${unlocked ? 'unlocked' : 'locked'}" 
                           data-level="${level}" ${unlocked ? '' : 'disabled'}>
-            ${level}${unlocked ? '' : '<span class="lock-icon">🔒</span>'}
+            ${level}${unlocked ? '' : '<span class="lock-icon">🔒</span>'}${starStr}
           </button>`;
         }).join('')}
       </div>
@@ -110,17 +139,56 @@ export class MenuScreen {
       <button class="cheat-btn" id="cheat-unlock" title="Alle Level freischalten">🔓</button>
     `;
 
+    // Daily login bonus popup
+    const loginBonus = checkDailyLoginBonus();
+    if (loginBonus) {
+      Sound.buy();
+      const popup = document.createElement('div');
+      popup.style.cssText = `
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7); z-index: 200;
+        display: flex; align-items: center; justify-content: center;
+      `;
+      popup.innerHTML = `
+        <div style="background: #1a1a2e; border: 3px solid #ffd700; border-radius: 20px; padding: 30px; text-align: center; max-width: 280px;">
+          <div style="font-size: 48px;">🎁</div>
+          <div style="color: #fff; font-size: 22px; font-weight: bold; margin: 10px 0;">Täglicher Bonus!</div>
+          <div style="color: #ffd700; font-size: 28px; font-weight: bold;">+${loginBonus.coins} 🪙</div>
+          <div style="color: #aaa; font-size: 14px; margin: 8px 0;">Streak: ${loginBonus.streak} Tag${loginBonus.streak > 1 ? 'e' : ''} 🔥</div>
+          <button style="margin-top: 15px; padding: 10px 30px; border: none; border-radius: 10px; background: #ffd700; color: #000; font-size: 18px; font-weight: bold; cursor: pointer; touch-action: manipulation;">OK</button>
+        </div>
+      `;
+      document.body.appendChild(popup);
+      popup.querySelector('button')!.addEventListener('click', () => {
+        popup.remove();
+        // Refresh coin display
+        const coinEl = this.container.querySelector('[style*="ffd700"]') as HTMLElement;
+        if (coinEl) coinEl.textContent = `🪙 ${getCoins()}`;
+      });
+    }
+
     this.container.querySelectorAll('.level-btn.unlocked').forEach(btn => {
-      btn.addEventListener('click', (e: Event) => {
+      btn.addEventListener('click', () => {
+        Sound.click();
         const level = parseInt((btn as HTMLElement).dataset.level || '1', 10);
         this.onLevelSelect(level);
       });
     });
 
+    // Daily challenge button
+    const dailyBtn = document.getElementById('btn-daily');
+    if (dailyBtn && !dailyPlayed) {
+      dailyBtn.addEventListener('click', () => {
+        Sound.click();
+        this.onLevelSelect(dailyLevel);
+      });
+    }
+
     const cheatBtn = document.getElementById('cheat-unlock');
     if (cheatBtn) {
       cheatBtn.addEventListener('click', (e: Event) => {
         e.stopPropagation();
+        Sound.click();
         localStorage.setItem('bogen_progress', String(levels.length));
         this.show();
       });
@@ -130,6 +198,7 @@ export class MenuScreen {
     if (bowBtn) {
       bowBtn.addEventListener('click', (e: Event) => {
         e.stopPropagation();
+        Sound.click();
         this.hide();
         this.bowSelectScreen.show();
       });

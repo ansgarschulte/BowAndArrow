@@ -1,7 +1,7 @@
 import { levels } from '../levels/levelConfig';
 import { ScoreManager } from '../systems/ScoreManager';
 import { InputManager3D } from '../systems/InputManager3D';
-import { Environment3D } from './Environment3D';
+import { Environment3D, getWorldTheme } from './Environment3D';
 import { Archer3D } from './Archer3D';
 import { Arrow3D } from './Arrow3D';
 import { Target3D } from './Target3D';
@@ -10,6 +10,7 @@ import { HUD3D } from '../ui/HUD3D';
 import { LevelCompleteScreen } from '../ui/LevelCompleteScreen';
 import { GameOverScreen } from '../ui/GameOverScreen';
 import { GameSettings, getSelectedBow, BowTypes } from '../config/gameConfig';
+import { Sound } from '../systems/SoundManager';
 import type { Engine3D } from './Engine3D';
 import * as THREE from 'three';
 
@@ -30,6 +31,8 @@ export class Game3D {
   private shootCooldown: number = 0;
   private finished: boolean = false;
   private lastAssistedDir: THREE.Vector3 | null = null;
+  private timeScale: number = 1;
+  private bulletTimeActive: boolean = false;
 
   constructor(engine: Engine3D, level: number) {
     this.engine = engine;
@@ -42,7 +45,7 @@ export class Game3D {
     }
 
     // Environment
-    this.environment = new Environment3D(engine.scene);
+    this.environment = new Environment3D(engine.scene, getWorldTheme(level));
 
     // Archer
     this.archer = new Archer3D(engine.scene);
@@ -59,8 +62,9 @@ export class Game3D {
     this.inputManager = new InputManager3D(engine.renderer.domElement);
     this.inputManager.onShoot((h, v, p) => this.shoot(h, v, p));
 
-    // Score
-    this.scoreManager = new ScoreManager(levelConfig.targets.length, levelConfig.arrowCount);
+    // Score — only count required targets (not bonus/bomb)
+    const requiredTargets = levelConfig.targets.filter(t => t.type !== 'bonus' && t.type !== 'bomb').length;
+    this.scoreManager = new ScoreManager(requiredTargets, levelConfig.arrowCount);
 
     // HUD
     this.hud = new HUD3D();
@@ -118,6 +122,9 @@ export class Game3D {
     }
 
     this.shootCooldown = 0.5;
+    // Haptic + sound feedback on shoot
+    try { navigator.vibrate?.(15); } catch { /* noop */ }
+    Sound.shoot();
   }
 
   private applyAimAssist(shootPos: THREE.Vector3, shootDir: THREE.Vector3): THREE.Vector3 {
@@ -152,16 +159,19 @@ export class Game3D {
   }
 
   update(delta: number): void {
+    // Apply bullet-time slow motion
+    const effectiveDelta = delta * this.timeScale;
+
     if (this.shootCooldown > 0) {
-      this.shootCooldown -= delta;
+      this.shootCooldown -= effectiveDelta;
     }
 
-    // Input
+    // Input (not affected by timescale)
     this.inputManager.update();
     const input = this.inputManager.getState();
 
     // Archer animation
-    this.archer.update(delta, input.aimAngleH, input.aimAngleV, input.power, input.isAiming);
+    this.archer.update(effectiveDelta, input.aimAngleH, input.aimAngleV, input.power, input.isAiming);
 
     // Aim system with aim-assist
     const shootPos = this.archer.getShootPosition();
@@ -175,12 +185,16 @@ export class Game3D {
     this.aimSystem.update(shootPos, shootDir, input.power, input.isAiming);
 
     // Targets
-    this.targets.forEach(t => t.update(delta));
+    this.targets.forEach(t => t.update(effectiveDelta));
 
     // Arrows + collisions
     this.arrows = this.arrows.filter(arrow => {
-      const active = arrow.update(delta);
-      if (!active) return false;
+      const active = arrow.update(effectiveDelta);
+      if (!active) {
+        this.scoreManager.registerMiss();
+        Sound.miss();
+        return false;
+      }
 
       const arrowPos = arrow.getPosition();
 
@@ -190,8 +204,29 @@ export class Game3D {
         if (result.hit) {
           const bowType = getSelectedBow();
           target.onHit(bowType);
-          const points = this.scoreManager.registerHit(result.distance, 1);
-          this.hud.showHitPoints(points);
+
+          if (target.isBomb()) {
+            // Bomb: lose points, screen shake, penalty sound
+            this.scoreManager.registerBombHit();
+            this.hud.showHitPoints(-200, 0);
+            try { navigator.vibrate?.([50, 30, 50, 30, 80]); } catch { /* noop */ }
+            Sound.gameOver();
+            this.shakeScreen();
+          } else {
+            const multiplier = target.isBonus() ? 3 : 1;
+            const countAsHit = target.isRequired();
+            const points = this.scoreManager.registerHit(result.distance, 1, multiplier, countAsHit);
+            this.hud.showHitPoints(points, this.scoreManager.getCombo());
+            try { navigator.vibrate?.([30, 20, 50]); } catch { /* noop */ }
+            Sound.hit();
+            const currentCombo = this.scoreManager.getCombo();
+            if (currentCombo > 1) Sound.combo(currentCombo);
+
+            // Bullet-time on last required target hit
+            if (countAsHit && this.scoreManager.isLevelComplete() && !this.bulletTimeActive) {
+              this.activateBulletTime();
+            }
+          }
           // Additional large-area effects for smoke/water bows
           const bowCfg = BowTypes[bowType];
           if (bowCfg.hitEffect) {
@@ -219,6 +254,7 @@ export class Game3D {
       if (this.scoreManager.isLevelComplete()) {
         this.finished = true;
         this.canShoot = false;
+        Sound.levelComplete();
         setTimeout(() => {
           this.inputManager.disableInput();
           this.levelComplete.show({
@@ -226,6 +262,7 @@ export class Game3D {
             score: this.scoreManager.getScore(),
             hits: this.scoreManager.getHits(),
             totalTargets: this.scoreManager.getTotalTargets(),
+            combo: this.scoreManager.getMaxCombo(),
             onNext: () => this.engine.startLevel(this.level + 1),
             onMenu: () => this.engine.showMenu(),
           });
@@ -233,6 +270,7 @@ export class Game3D {
       } else if (this.scoreManager.isGameOver() && this.arrows.every(a => !a.isActive())) {
         this.finished = true;
         this.canShoot = false;
+        Sound.gameOver();
         setTimeout(() => {
           this.inputManager.disableInput();
           this.gameOver.show({
@@ -318,5 +356,54 @@ export class Game3D {
       };
       requestAnimationFrame(animate);
     }
+  }
+
+  private shakeScreen(): void {
+    const canvas = this.engine.renderer.domElement;
+    let frame = 0;
+    const shake = () => {
+      if (frame >= 10) {
+        canvas.style.transform = '';
+        return;
+      }
+      const x = (Math.random() - 0.5) * 12;
+      const y = (Math.random() - 0.5) * 12;
+      canvas.style.transform = `translate(${x}px, ${y}px)`;
+      frame++;
+      requestAnimationFrame(shake);
+    };
+    shake();
+  }
+
+  private activateBulletTime(): void {
+    this.bulletTimeActive = true;
+    this.timeScale = 0.2; // 5x slow motion
+
+    // Show "EPIC!" text
+    const el = document.createElement('div');
+    el.textContent = '🎬 EPIC SHOT! 🎬';
+    el.style.cssText = `
+      position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
+      font-size: 36px; font-weight: bold; color: #fff;
+      text-shadow: 0 0 20px #ff4444, 0 0 40px #ff0000;
+      pointer-events: none; z-index: 15;
+      animation: hitFloat 1.5s ease-out forwards;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+
+    // Gradually restore time
+    let frame = 0;
+    const restore = () => {
+      frame++;
+      if (frame > 30) {
+        this.timeScale = 1;
+        this.bulletTimeActive = false;
+        return;
+      }
+      this.timeScale = 0.2 + (frame / 30) * 0.8;
+      requestAnimationFrame(restore);
+    };
+    setTimeout(() => requestAnimationFrame(restore), 800);
   }
 }

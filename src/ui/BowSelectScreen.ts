@@ -1,4 +1,5 @@
 import { BowType, BowTypes, getSelectedBow, setSelectedBow, getCoins, getOwnedBows, buyBow } from '../config/gameConfig';
+import { Sound } from '../systems/SoundManager';
 
 export class BowSelectScreen {
   private container: HTMLDivElement;
@@ -130,10 +131,12 @@ export class BowSelectScreen {
         const isOwned = owned.has(bow);
 
         if (isOwned) {
+          Sound.click();
           setSelectedBow(bow);
           this.show();
         } else {
           if (buyBow(bow)) {
+            Sound.buy();
             setSelectedBow(bow);
             this.show();
           }

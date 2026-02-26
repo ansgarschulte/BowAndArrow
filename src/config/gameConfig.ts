@@ -244,3 +244,76 @@ export function buyBow(bow: BowType): boolean {
   try { localStorage.setItem('bogen_owned_bows', JSON.stringify([...owned])); } catch { /* noop */ }
   return true;
 }
+
+// --- Stars & Highscores per level ---
+
+export function getLevelStars(level: number): number {
+  try { return parseInt(localStorage.getItem(`bogen_stars_${level}`) || '0', 10); } catch { return 0; }
+}
+
+export function saveLevelStars(level: number, stars: number): void {
+  try {
+    const current = getLevelStars(level);
+    if (stars > current) localStorage.setItem(`bogen_stars_${level}`, String(stars));
+  } catch { /* noop */ }
+}
+
+export function getLevelHighscore(level: number): number {
+  try { return parseInt(localStorage.getItem(`bogen_high_${level}`) || '0', 10); } catch { return 0; }
+}
+
+export function saveLevelHighscore(level: number, score: number): boolean {
+  const current = getLevelHighscore(level);
+  if (score > current) {
+    try { localStorage.setItem(`bogen_high_${level}`, String(score)); } catch { /* noop */ }
+    return true; // new record
+  }
+  return false;
+}
+
+// --- Daily Login Bonus ---
+
+export function checkDailyLoginBonus(): { coins: number; streak: number } | null {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const lastLogin = localStorage.getItem('bogen_last_login') || '';
+  if (lastLogin === today) return null; // already claimed
+
+  // Calculate streak
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  let streak = parseInt(localStorage.getItem('bogen_login_streak') || '0', 10);
+  streak = lastLogin === yesterday ? streak + 1 : 1;
+
+  const coins = Math.min(streak * 50, 500); // 50-500 coins based on streak
+  addCoins(coins);
+  localStorage.setItem('bogen_last_login', today);
+  localStorage.setItem('bogen_login_streak', String(streak));
+
+  return { coins, streak };
+}
+
+// --- Daily Challenge ---
+
+export function getDailyChallengeLevel(): number {
+  const today = new Date().toISOString().slice(0, 10);
+  // Deterministic "random" level based on date
+  let hash = 0;
+  for (let i = 0; i < today.length; i++) {
+    hash = ((hash << 5) - hash) + today.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash % 20) + 1;
+}
+
+export function hasDailyChallengeBeenPlayed(): boolean {
+  const today = new Date().toISOString().slice(0, 10);
+  return localStorage.getItem('bogen_daily_played') === today;
+}
+
+export function markDailyChallengeComplete(score: number): number {
+  const today = new Date().toISOString().slice(0, 10);
+  localStorage.setItem('bogen_daily_played', today);
+  // Double coins for daily challenge
+  const bonus = Math.round(score * 0.5);
+  addCoins(bonus);
+  return bonus;
+}
