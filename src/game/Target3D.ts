@@ -620,9 +620,90 @@ export class Target3D {
   }
 
   private hitEffectAir(): void {
-    // Wind swirl — light blue particles spinning outward
-    this.spawnBurst([0xb3e5fc, 0x81d4fa, 0xe1f5fe, 0xffffff, 0x4fc3f7], 18, 5, 0.05, 600);
-    this.fadeOutMesh(0, 300, 1.2);
+    const pos = this.mesh.position.clone();
+    const s = this.config.scale;
+    const tornadoColors = [0xb3e5fc, 0x81d4fa, 0x4fc3f7, 0xe1f5fe, 0xffffff, 0x29b6f6];
+
+    // --- Build tornado: rings of particles in a conical helix ---
+    const ringCount = 12;
+    const particlesPerRing = 8;
+    const tornadoDuration = 900; // ms total
+    const startTime = Date.now();
+
+    type TParticle = { mesh: THREE.Mesh; mat: THREE.MeshBasicMaterial; geo: THREE.SphereGeometry; ringIdx: number; angleOffset: number };
+    const particles: TParticle[] = [];
+
+    for (let r = 0; r < ringCount; r++) {
+      const t = r / (ringCount - 1); // 0=bottom, 1=top
+      const ringRadius = 0.1 + t * s * 1.4; // narrow at base, wide at top
+      const baseY = pos.y + t * s * 3.5;    // height
+      for (let p = 0; p < particlesPerRing; p++) {
+        const angle = (p / particlesPerRing) * Math.PI * 2;
+        const pSize = 0.05 + t * 0.12;
+        const geo = new THREE.SphereGeometry(pSize, 4, 4);
+        const mat = new THREE.MeshBasicMaterial({
+          color: tornadoColors[Math.floor(Math.random() * tornadoColors.length)],
+          transparent: true,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(
+          pos.x + Math.cos(angle) * ringRadius,
+          baseY,
+          pos.z + Math.sin(angle) * ringRadius
+        );
+        this.scene.add(mesh);
+        particles.push({ mesh, mat, geo, ringIdx: r, angleOffset: angle });
+      }
+    }
+
+    // Target: spin and fly upward/sideways into tornado
+    const flyDir = new THREE.Vector3((Math.random() - 0.5) * 2, 1, (Math.random() - 0.5) * 0.5).normalize();
+
+    const animateTornado = () => {
+      const elapsed = Date.now() - startTime;
+      const t = Math.min(elapsed / tornadoDuration, 1);
+      const spinSpeed = 6; // rad/s
+
+      for (const p of particles) {
+        const rt = p.ringIdx / (ringCount - 1);
+        const ringRadius = 0.1 + rt * s * 1.4;
+        const baseY = pos.y + rt * s * 3.5;
+        const angle = p.angleOffset + elapsed * 0.001 * spinSpeed * (1 + rt);
+        // Expand outward over time then shrink as tornado moves away
+        const expand = t < 0.5 ? t * 2 : 1 - (t - 0.5) * 2;
+        const radius = ringRadius * (0.3 + expand * 0.7);
+        p.mesh.position.set(
+          pos.x + Math.cos(angle) * radius,
+          baseY + t * s * 1.5, // tornado rises
+          pos.z + Math.sin(angle) * radius
+        );
+        p.mat.opacity = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
+      }
+
+      // Spin and sweep target into tornado
+      const targetT = Math.min(elapsed / (tornadoDuration * 0.6), 1);
+      this.mesh.rotation.z += 0.18; // spin
+      this.mesh.rotation.y += 0.22;
+      this.mesh.position.x = pos.x + flyDir.x * targetT * s * 2.5;
+      this.mesh.position.y = pos.y + flyDir.y * targetT * s * 3.0 + Math.sin(targetT * Math.PI * 3) * 0.3;
+      this.mesh.position.z = pos.z + flyDir.z * targetT * s * 1.5;
+      // Shrink target as it gets swept away
+      const targetScale = 1 - targetT * 0.9;
+      this.mesh.scale.setScalar(targetScale);
+
+      if (t < 1) {
+        requestAnimationFrame(animateTornado);
+      } else {
+        // Cleanup
+        for (const p of particles) {
+          this.scene.remove(p.mesh);
+          p.geo.dispose();
+          p.mat.dispose();
+        }
+        this.scene.remove(this.mesh);
+      }
+    };
+    requestAnimationFrame(animateTornado);
   }
 
   private createHitParticles(): void {
