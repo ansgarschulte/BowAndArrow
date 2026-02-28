@@ -534,9 +534,77 @@ export class Target3D {
   }
 
   private hitEffectGold(): void {
-    // Gold coin explosion sparkle
-    this.spawnBurst([0xffd700, 0xffe082, 0xffecb3, 0xffc107, 0xffffff], 22, 4, 0.06, 900);
-    this.fadeOutMesh(0, 500);
+    const pos = this.mesh.position.clone();
+    const s = this.config.scale;
+
+    // 1. Spawn crown sprite above the target
+    const canvas = document.createElement('canvas');
+    canvas.width = 128; canvas.height = 128;
+    const ctx = canvas.getContext('2d')!;
+    ctx.font = '80px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('👑', 64, 64);
+    const tex = new THREE.CanvasTexture(canvas);
+    const crownMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+    const crown = new THREE.Sprite(crownMat);
+    crown.scale.set(s * 1.2, s * 1.2, 1);
+    crown.position.copy(pos);
+    crown.position.y += s * 1.1; // above target
+    this.scene.add(crown);
+
+    // 2. Drop crown down onto target center
+    const dropStart = Date.now();
+    const dropDuration = 300;
+    const crownStartY = crown.position.y;
+    const crownEndY = pos.y + s * 0.3;
+    const dropTick = () => {
+      const t = Math.min((Date.now() - dropStart) / dropDuration, 1);
+      const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      crown.position.y = crownStartY + (crownEndY - crownStartY) * ease;
+      if (t < 1) { requestAnimationFrame(dropTick); return; }
+
+      // 3. After crown lands: topple the whole group sideways
+      const toppleStart = Date.now();
+      const toppleDuration = 500;
+      // Choose a random topple direction (pivot at base)
+      const dir = Math.random() > 0.5 ? 1 : -1;
+      const baseY = pos.y - (this.config.y || 0); // approximate ground
+
+      const toppleTick = () => {
+        const tt = Math.min((Date.now() - toppleStart) / toppleDuration, 1);
+        const easeIn = tt * tt;
+        const angle = dir * (Math.PI / 2) * easeIn; // 0 → 90°
+        this.mesh.rotation.z = angle;
+        crown.position.copy(this.mesh.position);
+        crown.position.y += Math.cos(angle) * s * 0.3;
+        crown.position.x += Math.sin(angle) * dir * s * 0.3;
+
+        if (tt < 1) { requestAnimationFrame(toppleTick); return; }
+
+        // 4. Gold sparkles + fade out after topple
+        this.spawnBurst([0xffd700, 0xffe082, 0xffecb3, 0xffc107, 0xffffff], 22, 4, 0.06, 900);
+
+        // Fade crown and mesh together
+        const fadeStart = Date.now();
+        const fadeTick = () => {
+          const ft = Math.min((Date.now() - fadeStart) / 500, 1);
+          crownMat.opacity = 1 - ft;
+          this.mesh.traverse(c => {
+            if (c instanceof THREE.Mesh || c instanceof THREE.Sprite) {
+              const m = (c as THREE.Mesh).material as THREE.MeshBasicMaterial | THREE.SpriteMaterial;
+              if (m) { m.transparent = true; m.opacity = 1 - ft; }
+            }
+          });
+          if (ft < 1) { requestAnimationFrame(fadeTick); return; }
+          this.scene.remove(crown); tex.dispose(); crownMat.dispose();
+          this.scene.remove(this.mesh);
+        };
+        fadeTick();
+      };
+      requestAnimationFrame(toppleTick);
+    };
+    requestAnimationFrame(dropTick);
   }
 
   private hitEffectWater(): void {
