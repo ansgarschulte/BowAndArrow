@@ -438,14 +438,99 @@ export class Target3D {
   }
 
   private hitEffectLightning(): void {
-    // Flash white, then electric burst
+    const pos = this.mesh.position.clone();
+    // Flash white
     this.mesh.traverse(child => {
-      if (child instanceof THREE.Mesh) {
+      if (child instanceof THREE.Mesh)
         (child.material as THREE.MeshBasicMaterial).color?.setHex(0xffffff);
-      }
     });
+    // Draw a jagged lightning bolt from sky to target using line segments
+    this.spawnLightningBolt(pos);
+    // Electric burst particles at impact
     this.spawnBurst([0xffff00, 0xfff9c4, 0xffd600, 0xffffff, 0xffe57f], 20, 7, 0.04, 500);
     this.fadeOutMesh(0, 200);
+  }
+
+  private spawnLightningBolt(targetPos: THREE.Vector3): void {
+    const drawBolt = () => {
+      const points: THREE.Vector3[] = [];
+      const topY = targetPos.y + 18;
+      const segments = 10;
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const x = targetPos.x + (i === 0 || i === segments ? 0 : (Math.random() - 0.5) * 1.5);
+        const y = topY + (targetPos.y - topY) * t + (i === 0 || i === segments ? 0 : (Math.random() - 0.5) * 1.0);
+        points.push(new THREE.Vector3(x, y, targetPos.z));
+      }
+      // Ensure last point hits the target exactly
+      points[points.length - 1].copy(targetPos);
+
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      const mat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2, transparent: true });
+      const line = new THREE.Line(geo, mat);
+      this.scene.add(line);
+
+      // Branch bolt (thinner)
+      const branchIdx = Math.floor(segments * 0.4);
+      const branchPts: THREE.Vector3[] = [points[branchIdx].clone()];
+      for (let i = 1; i <= 4; i++) {
+        branchPts.push(new THREE.Vector3(
+          points[branchIdx].x + (Math.random() - 0.5) * 2 * i * 0.4,
+          points[branchIdx].y - i * 1.2,
+          targetPos.z
+        ));
+      }
+      const branchGeo = new THREE.BufferGeometry().setFromPoints(branchPts);
+      const branchMat = new THREE.LineBasicMaterial({ color: 0xffee58, transparent: true });
+      const branch = new THREE.Line(branchGeo, branchMat);
+      this.scene.add(branch);
+
+      // Flash: show bolt, flicker, then remove
+      const start = Date.now();
+      const flickers = [0, 50, 100, 160, 200]; // ms timestamps to show/hide
+      let fi = 0;
+      const flick = () => {
+        const elapsed = Date.now() - start;
+        if (elapsed > 350) {
+          this.scene.remove(line); this.scene.remove(branch);
+          geo.dispose(); mat.dispose();
+          branchGeo.dispose(); branchMat.dispose();
+          return;
+        }
+        const show = Math.floor(elapsed / 40) % 2 === 0;
+        mat.opacity = show ? 1.0 : 0.2;
+        branchMat.opacity = show ? 0.7 : 0.1;
+        requestAnimationFrame(flick);
+      };
+      flick();
+
+      // Second bolt slightly offset after 80ms for double-strike effect
+      setTimeout(() => {
+        const pts2: THREE.Vector3[] = [];
+        for (let i = 0; i <= segments; i++) {
+          const t = i / segments;
+          pts2.push(new THREE.Vector3(
+            targetPos.x + (i === 0 || i === segments ? 0 : (Math.random() - 0.5) * 1.2),
+            topY + (targetPos.y - topY) * t,
+            targetPos.z
+          ));
+        }
+        pts2[pts2.length - 1].copy(targetPos);
+        const geo2 = new THREE.BufferGeometry().setFromPoints(pts2);
+        const mat2 = new THREE.LineBasicMaterial({ color: 0xffd600, transparent: true });
+        const line2 = new THREE.Line(geo2, mat2);
+        this.scene.add(line2);
+        const start2 = Date.now();
+        const flick2 = () => {
+          const e = Date.now() - start2;
+          if (e > 200) { this.scene.remove(line2); geo2.dispose(); mat2.dispose(); return; }
+          mat2.opacity = Math.floor(e / 35) % 2 === 0 ? 0.9 : 0.15;
+          requestAnimationFrame(flick2);
+        };
+        flick2();
+      }, 80);
+    };
+    drawBolt();
   }
 
   private hitEffectGold(): void {
