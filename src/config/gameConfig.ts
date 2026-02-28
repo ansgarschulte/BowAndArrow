@@ -295,6 +295,14 @@ export function updateHighscoreName(level: number, name: string): void {
   } catch { /* noop */ }
 }
 
+export function getPlayerName(): string {
+  try { return localStorage.getItem('bogen_player_name') || ''; } catch { return ''; }
+}
+
+export function savePlayerName(name: string): void {
+  try { localStorage.setItem('bogen_player_name', name); } catch { /* noop */ }
+}
+
 export function getTotalHighscore(levelCount: number): number {
   let total = 0;
   for (let i = 1; i <= levelCount; i++) {

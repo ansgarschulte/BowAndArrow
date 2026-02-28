@@ -1,5 +1,5 @@
 import { levels } from '../levels/levelConfig';
-import { addCoins, saveLevelStars, saveLevelHighscore, getLevelHighscore, getLevelHighscoreName, updateHighscoreName, getDailyChallengeLevel, hasDailyChallengeBeenPlayed, markDailyChallengeComplete } from '../config/gameConfig';
+import { addCoins, saveLevelStars, saveLevelHighscore, getLevelHighscore, getLevelHighscoreName, updateHighscoreName, getPlayerName, savePlayerName, getDailyChallengeLevel, hasDailyChallengeBeenPlayed, markDailyChallengeComplete } from '../config/gameConfig';
 import { Sound } from '../systems/SoundManager';
 
 export class LevelCompleteScreen {
@@ -95,7 +95,7 @@ export class LevelCompleteScreen {
         ${isNewRecord ? `
           <div class="stats" style="color:#ff4444; font-size:22px; animation: pulse 0.5s infinite alternate;">🎊 Neuer Rekord! 🎊</div>
           <div style="margin:10px 0 4px; display:flex; gap:6px; justify-content:center; align-items:center;">
-            <input id="hs-name-input" type="text" maxlength="12" placeholder="Dein Name"
+            <input id="hs-name-input" type="text" maxlength="12" placeholder="${getPlayerName() || 'Dein Name'}"
               style="padding:8px 10px; border-radius:10px; border:2px solid #ffd700; background:#111;
                      color:#fff; font-size:16px; width:140px; text-align:center;
                      -webkit-tap-highlight-color:transparent; outline:none;" />
@@ -114,9 +114,15 @@ export class LevelCompleteScreen {
     if (isNewRecord) {
       const nameInput = document.getElementById('hs-name-input') as HTMLInputElement | null;
       const nameSaveBtn = document.getElementById('hs-name-save') as HTMLButtonElement | null;
+      // Pre-fill with remembered player name
+      const remembered = getPlayerName();
+      if (nameInput && remembered) nameInput.value = remembered;
       const saveName = () => {
-        const name = nameInput?.value.trim() || '';
-        if (name) updateHighscoreName(data.level, name);
+        const name = (nameInput?.value.trim()) || remembered || '';
+        if (name) {
+          updateHighscoreName(data.level, name);
+          savePlayerName(name); // remember for next time
+        }
       };
       nameSaveBtn?.addEventListener('click', saveName);
       nameInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveName(); });
